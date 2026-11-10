@@ -17,7 +17,7 @@
   --series: #0068b6; --series-dim: #cdd6e0;
   --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
   --good-tint: #e3f3e3; --good-ink: #006300; --rest: #eef1f4;
-  --tip-bg: #1c2430; --tip-ink: #ffffff;
+  --tip-bg: #1c2430; --tip-ink: #ffffff; --on-series: #ffffff;
   /* 3系列（積込・荷降ろし・待機） */
   --s1: #0068b6; --s2: #eb6834; --s3: #1baf7a;
   /* 濃淡（少ない→多い） */
@@ -31,7 +31,7 @@
     --line: #26334d; --grid: #212e47; --axis: #3a4a68;
     --series: #3393db; --series-dim: #33415c;
     --good-tint: #163521; --good-ink: #5fd35f; --rest: #1a2539;
-    --tip-bg: #eef2f7; --tip-ink: #151f33;
+    --tip-bg: #eef2f7; --tip-ink: #151f33; --on-series: #0d1424;
     --s1: #3393db; --s2: #d95926; --s3: #199e70;
     --h1: #184f95; --h2: #256abf; --h3: #3987e5; --h4: #6da7ec; --h5: #9ec5f4; --h6: #cde2fb;
   }
@@ -43,7 +43,7 @@
   --line: #26334d; --grid: #212e47; --axis: #3a4a68;
   --series: #3393db; --series-dim: #33415c;
   --good-tint: #163521; --good-ink: #5fd35f; --rest: #1a2539;
-  --tip-bg: #eef2f7; --tip-ink: #151f33;
+  --tip-bg: #eef2f7; --tip-ink: #151f33; --on-series: #0d1424;
   --s1: #3393db; --s2: #d95926; --s3: #199e70;
   --h1: #184f95; --h2: #256abf; --h3: #3987e5; --h4: #6da7ec; --h5: #9ec5f4; --h6: #cde2fb;
 }
@@ -165,6 +165,34 @@ tr:last-child td { border-bottom: 0; }
 .points .v { font-size: 18px; font-weight: 800; }
 .points .n { font-size: 12.5px; color: var(--ink-2); }
 
+/* ルート別の必要台数・人員 */
+.rid { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--brand); color: #fff; font-size: 12px; font-weight: 800; margin-right: 6px; vertical-align: middle; }
+.sim-ctrl { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 12px; }
+.sim-ctrl .lbl { font-size: 13px; color: var(--muted); font-weight: 600; margin-right: 6px; }
+.sim-routes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.sr { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--card-2); border-radius: 10px; padding: 8px 10px; }
+.sr .nm { font-size: 13px; font-weight: 700; min-width: 0; }
+.sr .nm small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.step { display: inline-flex; align-items: center; gap: 2px; flex: none; }
+.step button { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 18px; font-weight: 700; cursor: pointer; }
+.step button:disabled { opacity: .35; cursor: default; }
+.step button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.step output { min-width: 30px; text-align: center; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sim-res { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+.sim-res .kpi { background: var(--card-2); border: 0; padding: 12px 14px; }
+@media (max-width: 560px) { .sim-res { grid-template-columns: 1fr 1fr; } .sim-res .kpi:last-child { grid-column: span 2; } }
+.chart .seg-trip { fill: var(--series); }
+.chart .seg-brk { fill: var(--series-dim); }
+.chart .seg-trip:hover, .chart .seg-brk:hover { opacity: .85; }
+.chart .seg-lbl { fill: var(--on-series); font-weight: 700; font-size: 11.5px; }
+.chart .brk-lbl { fill: var(--ink-2); font-size: 10.5px; }
+.chart .row-lbl { fill: var(--ink-2); font-size: 12px; font-weight: 600; }
+.chart .cap-line { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.chart .cap-lbl { fill: var(--ink); font-weight: 700; }
+.note { font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.6; }
+.diff-down { color: var(--good-ink); font-weight: 700; }
+.diff-up { color: var(--critical); font-weight: 700; }
+
 details.tv { margin-top: 10px; }
 details.tv summary { font-size: 13px; color: var(--brand); cursor: pointer; width: max-content; }
 :root[data-theme="dark"] details.tv summary { color: var(--series); }
@@ -231,6 +259,35 @@ footer { max-width: 1240px; margin: 0 auto; padding: 0 16px 32px; font-size: 12p
     <section class="card s4">
       <div class="card-head"><div><h2>稼働のポイント</h2><p class="desc" id="points-desc"></p></div></div>
       <ul class="points" id="points"></ul>
+    </section>
+
+    <section class="card s12">
+      <div class="card-head"><div><h2>ルート別の実績</h2><p class="desc" id="route-desc"></p></div></div>
+      <div class="table-wrap"><table id="route-table"></table></div>
+    </section>
+
+    <section class="card s8">
+      <div class="card-head"><div><h2>必要な台数・人員の試算</h2><p class="desc">ルートごとの1日の便数を入れると、1台の上限時間（休憩1時間を含む）に収まるように便を組み合わせて、必要な台数を出します。便の時間は、選んだ期間の実績の平均です。</p></div></div>
+      <div class="sim-ctrl">
+        <label><span class="lbl">曜日</span><select id="sim-dow"></select></label>
+        <div><span class="lbl">1台の拘束時間の上限</span>
+          <div class="seg" id="sim-cap">
+            <button type="button" data-c="9" aria-pressed="false">9時間</button>
+            <button type="button" data-c="11" aria-pressed="true">11時間</button>
+            <button type="button" data-c="13" aria-pressed="false">13時間</button>
+          </div>
+        </div>
+      </div>
+      <div class="sim-routes" id="sim-routes"></div>
+      <div class="sim-res" id="sim-res"></div>
+      <div class="chart" id="sim-chart"></div>
+      <p class="note">横棒は1台ぶんの1日（便の所要時間と休憩の合計）で、時刻表ではありません。店舗の納品時間の指定や、積込場所の混み具合までは考慮していないので、配車の目安としてお使いください。13時間は、法令（改善基準告示）で決められた1日の拘束時間の原則の上限です。</p>
+    </section>
+
+    <section class="card s4">
+      <div class="card-head"><div><h2>曜日ごとの必要台数</h2><p class="desc" id="dow-desc"></p></div></div>
+      <div class="table-wrap"><table id="dow-table"></table></div>
+      <ul class="points" id="staff-points" style="margin-top:14px"></ul>
     </section>
 
     <section class="card s8">
@@ -376,54 +433,66 @@ for (const r of records.filter((x) => x.date === TODAY)) {
   r.lastSync = r.vid === 'v4' ? Math.min(toMin(r.out) + 25, nowMin) : back ? toMin(r.in) + 2 : nowMin - (3 + Math.floor(rnd() * 12));
 }
 
-// 日報の「運行記録」のサンプル（積込・荷降ろし・待機・休憩）。場所の名前は架空
-const LOAD_PLACES = [
-  { name: '相模原センター', w: 5, waitP: 0.6, wait: [20, 55] },
-  { name: '座間倉庫', w: 3, waitP: 0.3, wait: [10, 30] },
-  { name: '厚木工場', w: 2, waitP: 0.2, wait: [10, 25] },
+// 日報の「運行記録」のサンプル（積込・荷降ろし・待機・休憩）。場所・ルートの名前は架空
+// 1日の運行 = 1便（その車両のいつものルート）＋ 曜日によって2便目
+const LOAD_PLACES = {
+  '相模原センター': { waitP: 0.6, wait: [20, 55] },
+  '座間倉庫': { waitP: 0.3, wait: [10, 30] },
+  '厚木工場': { waitP: 0.2, wait: [10, 25] },
+};
+const ROUTES = [
+  { id: 'A', name: '町田・八王子方面', load: '相模原センター', stores: ['橋本店', '町田店', '八王子店', '多摩店'], drops: [3, 4], to: [10, 15], leg: [25, 45], back: [30, 45] },
+  { id: 'B', name: '横浜方面', load: '相模原センター', stores: ['大和店', '横浜青葉店', '横浜緑店'], drops: [2, 3], to: [10, 15], leg: [35, 55], back: [45, 60] },
+  { id: 'C', name: '県央方面', load: '座間倉庫', stores: ['海老名店', '厚木店', '座間店'], drops: [2, 3], to: [25, 35], leg: [20, 35], back: [30, 40] },
+  { id: 'D', name: '湘南方面', load: '座間倉庫', stores: ['藤沢店', '茅ヶ崎店', '平塚店'], drops: [2, 3], to: [25, 35], leg: [30, 50], back: [45, 60] },
+  { id: 'E', name: '横持ち（工場→センター）', load: '厚木工場', stores: ['相模原センター'], drops: [1, 1], to: [35, 45], leg: [35, 45], back: [10, 15] },
 ];
-const DROP_PLACES = ['町田店', '八王子店', '海老名店', '橋本店', '大和店', '厚木店', '藤沢店', '横浜青葉店'];
+const RMAP = Object.fromEntries(ROUTES.map((x) => [x.id, x]));
+const MAIN_ROUTE = { v1: 'A', v2: 'B', v3: 'C', v4: 'D', v5: 'A', v6: 'C' };
+const SECOND_P = [0, 0.75, 0.5, 0.5, 0.5, 0.5, 0.15]; // 曜日ごとの「2便目がある」確率（月曜は荷物が多い）
+const SECOND_ROUTES = [['E', 6], ['B', 2.5], ['C', 1.5]];
 const r2 = mulberry32(777);
 const rr = (a, b) => a + r2() * (b - a);
-const pickLoad = () => { let x = r2() * 10; for (const p of LOAD_PLACES) { if ((x -= p.w) < 0) return p; } return LOAD_PLACES[0]; };
+const ri = (a, b) => a + Math.floor(r2() * (b - a + 1));
+const pickR2 = (weighted) => { let x = r2() * weighted.reduce((s, [, w]) => s + w, 0); for (const [v, w] of weighted) { if ((x -= w) < 0) return v; } return weighted[0][0]; };
+
+// 1便ぶん（車庫を出て、積んで、配って、車庫に戻るまで）
+function makeTrip(route, t0, ev, withBreak) {
+  const lp = LOAD_PLACES[route.load];
+  let t = t0 + rr(...route.to), brk = 0, wait = 0;
+  const push = (kind, place, dur) => { const s = Math.round(t); t += dur; ev.push({ kind, place, start: s, end: Math.round(t) }); return dur; };
+  if (r2() < lp.waitP) wait += push('待機', route.load, rr(...lp.wait));
+  push('積込', route.load, rr(20, 40));
+  const n = ri(...route.drops);
+  const s0 = ri(0, route.stores.length - 1);
+  for (let i = 0; i < n; i++) {
+    const place = route.stores[(s0 + i) % route.stores.length];
+    t += rr(...route.leg);
+    if (r2() < 0.2) wait += push('待機', place, rr(10, 30));
+    push('荷降ろし', place, rr(15, 35));
+    if (withBreak && i === Math.floor((n - 1) / 2)) { t += rr(5, 10); brk += push('休憩', '', rr(40, 60)); }
+  }
+  t += rr(...route.back);
+  return { route: route.id, start: Math.round(t0), end: Math.round(t), dur: Math.round(t - t0 - brk), drops: n, wait: Math.round(wait) };
+}
+
 for (const r of records) {
   if (!r.worked) continue;
-  const seq = [];
-  const load = () => {
-    const p = pickLoad();
-    seq.push({ gap: rr(15, 35) });
-    if (r2() < p.waitP) seq.push({ kind: '待機', place: p.name, dur: rr(p.wait[0], p.wait[1]) });
-    seq.push({ kind: '積込', place: p.name, dur: rr(20, 40) });
-  };
-  const drop = () => {
-    const place = DROP_PLACES[Math.floor(r2() * DROP_PLACES.length)];
-    seq.push({ gap: rr(20, 50) });
-    if (r2() < 0.2) seq.push({ kind: '待機', place, dur: rr(10, 30) });
-    seq.push({ kind: '荷降ろし', place, dur: rr(15, 35) });
-  };
-  load();
-  const mid = Math.max(1, Math.floor(r.stops / 2));
-  for (let i = 0; i < r.stops; i++) {
-    drop();
-    if (i === mid - 1) {
-      seq.push({ gap: rr(10, 20) });
-      seq.push({ kind: '休憩', place: '', dur: rr(40, 60) });
-      if (r2() < 0.35) load(); // 午後にもう一度積む便
-    }
+  const two = r2() < SECOND_P[r.dow];
+  r.events = []; r.trips = [];
+  let t = toMin(r.out);
+  const t1 = makeTrip(RMAP[MAIN_ROUTE[r.vid]], t, r.events, !two);
+  r.trips.push(t1); t = t1.end;
+  if (two) {
+    t += rr(5, 15);
+    const s = Math.round(t); t += rr(40, 60);
+    r.events.push({ kind: '休憩', place: '', start: s, end: Math.round(t) });
+    const t2 = makeTrip(RMAP[pickR2(SECOND_ROUTES)], t, r.events, false);
+    r.trips.push(t2); t = t2.end;
   }
-  seq.push({ gap: rr(25, 45) });
-  // 出庫〜帰庫の時間に収まるよう、移動時間だけを伸び縮みさせる
-  const o = toMin(r.out), span = toMin(r.in) - o;
-  const workMin = seq.reduce((s, x) => s + (x.dur || 0), 0);
-  const gapMin = seq.reduce((s, x) => s + (x.gap || 0), 0);
-  const k = Math.max(0.6, (span - workMin) / gapMin);
-  let t = o;
-  r.events = [];
-  for (const x of seq) {
-    if (x.gap) { t += x.gap * k; continue; }
-    const start = Math.round(t);
-    t += x.dur;
-    r.events.push({ kind: x.kind, place: x.place, start, end: Math.round(t) });
+  if (r.date !== TODAY) { // 本日分は上で固定した出庫・帰庫のまま
+    r.in = fromMin(Math.round(t + rr(5, 15)));
+    r.stops = r.trips.reduce((a, x) => a + x.drops, 0);
   }
 }
 
@@ -785,9 +854,203 @@ function renderHourly() {
   ].map(([k, v, n]) => `<li><span class="k">${k}</span><span class="v">${v}</span><span class="n">${n}</span></li>`).join('');
 }
 
+// ---------- ルート別の必要台数・人員 ----------
+const BREAK_MIN = 60; // 1台につき休憩1時間を見込む
+const sim = { dow: 'wk', cap: 11, counts: null };
+const SIM_DOWS = [['wk', '平日（月〜金）'], ['1', '月曜'], ['2', '火曜'], ['3', '水曜'], ['4', '木曜'], ['5', '金曜'], ['6', '土曜']];
+const dowsOf = (key) => (key === 'wk' ? [1, 2, 3, 4, 5] : [Number(key)]);
+const hmc = (min) => { const m = Math.round(min); return `${Math.floor(m / 60)}:${pad(m % 60)}`; };
+let RS = null;
+
+function routeStats() {
+  const dates = periodDates().filter((d) => d !== TODAY); // 本日分は途中なので含めない
+  const set = new Set(dates);
+  const rows = records.filter((r) => set.has(r.date) && r.worked); // ルートの試算は全車両で
+  const dayCount = Array(7).fill(0);
+  dates.forEach((d) => dayCount[new Date(d + 'T00:00').getDay()]++);
+  const per = Object.fromEntries(ROUTES.map((x) => [x.id, { n: 0, dur: 0, drops: 0, wait: 0, byDow: Array(7).fill(0) }]));
+  const byDate = {};
+  for (const r of rows) {
+    (byDate[r.date] ||= { dow: r.dow, rows: [] }).rows.push(r);
+    for (const t of r.trips) { const p = per[t.route]; p.n++; p.dur += t.dur; p.drops += t.drops; p.wait += t.wait; p.byDow[r.dow]++; }
+  }
+  const avgDur = {};
+  for (const x of ROUTES) {
+    const p = per[x.id];
+    if (p.n) { avgDur[x.id] = p.dur / p.n; continue; }
+    const all = records.filter((r) => r.worked && r.date !== TODAY).flatMap((r) => r.trips).filter((t) => t.route === x.id);
+    avgDur[x.id] = all.length ? sum(all, (t) => t.dur) / all.length : 240;
+  }
+  // 積込場所ごとに「同時に積込していた台数」の最大
+  const loadPeak = {};
+  for (const name of Object.keys(LOAD_PLACES)) loadPeak[name] = { max: 0, sumMax: 0, days: 0 };
+  for (const { rows: dayRows } of Object.values(byDate)) {
+    for (const name of Object.keys(LOAD_PLACES)) {
+      const ev = [];
+      dayRows.forEach((r) => r.events.forEach((e) => { if (e.kind === '積込' && e.place === name) ev.push([e.start, 1], [e.end, -1]); }));
+      if (!ev.length) continue;
+      ev.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      let cur = 0, mx = 0;
+      ev.forEach(([, d]) => { cur += d; mx = Math.max(mx, cur); });
+      const lp = loadPeak[name];
+      lp.max = Math.max(lp.max, mx); lp.sumMax += mx; lp.days++;
+    }
+  }
+  return { dates, rows, dayCount, per, byDate, avgDur, loadPeak };
+}
+
+// 長い便から順に、いちばん詰まっている（でも入る）車両に入れていく
+function pack(items, capH) {
+  const room = capH * 60 - BREAK_MIN;
+  const bins = [];
+  [...items].sort((a, b) => b.dur - a.dur).forEach((it) => {
+    let best = null;
+    for (const b of bins) if (b.used + it.dur <= room && (!best || b.used > best.used)) best = b;
+    if (best) { best.items.push(it); best.used += it.dur; } else bins.push({ items: [it], used: it.dur });
+  });
+  return bins;
+}
+
+function dowCompare() {
+  const out = {};
+  for (let d = 1; d <= 6; d++) out[d] = { days: 0, actual: 0, need: 0 };
+  for (const { dow, rows } of Object.values(RS.byDate)) {
+    if (!out[dow]) continue;
+    out[dow].days++;
+    out[dow].actual += rows.length;
+    out[dow].need += pack(rows.flatMap((r) => r.trips), sim.cap).length;
+  }
+  return out;
+}
+
+function renderRoutes() {
+  RS = routeStats();
+  sim.counts = null;
+  const wkDays = [1, 2, 3, 4, 5].reduce((a, d) => a + RS.dayCount[d], 0);
+  $('#route-desc').textContent = `全${VEHICLES.length}台・選んだ期間（本日分は含みません。車両の絞り込みは反映しません）。1便 = 車庫を出て、積んで、配って、車庫に戻るまで。時間は休憩を除いた平均です。`;
+  $('#route-table').innerHTML = '<thead><tr><th>ルート</th><th>積込 → 配送先</th><th class="num">便数（期間）</th><th class="num">1日あたり（平日）</th><th class="num">1日あたり（土曜）</th><th class="num">1便の平均時間</th><th class="num">配送件数／便</th><th class="num">待機／便</th></tr></thead><tbody>' +
+    ROUTES.map((x) => {
+      const p = RS.per[x.id];
+      const wk = [1, 2, 3, 4, 5].reduce((a, d) => a + p.byDow[d], 0);
+      const sat = RS.dayCount[6] ? p.byDow[6] / RS.dayCount[6] : null;
+      return `<tr><td><span class="rid">${x.id}</span>${esc(x.name)}</td><td class="wrap">${esc(x.load)} → ${esc(x.stores.join('・'))}</td>` +
+        `<td class="num">${fmt(p.n)}便</td><td class="num">${wkDays ? fmt(wk / wkDays, 1) + '便' : '—'}</td><td class="num">${sat == null ? '—' : fmt(sat, 1) + '便'}</td>` +
+        `<td class="num">${p.n ? hm(p.dur / p.n) : '—'}</td><td class="num">${p.n ? fmt(p.drops / p.n, 1) + '件' : '—'}</td><td class="num">${p.n ? fmt(p.wait / p.n) + '分' : '—'}</td></tr>`;
+    }).join('') + '</tbody>';
+  renderDow();
+  renderSim();
+}
+
+function renderDow() {
+  const cmp = dowCompare();
+  $('#dow-desc').textContent = `その日の実際の便を、上限${sim.cap}時間で組み合わせ直した場合の台数（1日平均）。`;
+  let weekNeed = 0;
+  const rowsHtml = [1, 2, 3, 4, 5, 6].map((d) => {
+    const c = cmp[d];
+    if (!c.days) return `<tr><td>${WD[d]}</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>`;
+    const a = c.actual / c.days, n = c.need / c.days, df = n - a;
+    weekNeed += Math.ceil(n - 1e-9);
+    const cls = df < -0.05 ? 'diff-down' : df > 0.05 ? 'diff-up' : '';
+    return `<tr><td>${WD[d]}</td><td class="num">${fmt(a, 1)}台</td><td class="num"><b>${fmt(n, 1)}台</b></td><td class="num ${cls}">${df > 0.05 ? '+' : df < -0.05 ? '−' : '±'}${fmt(Math.abs(df), 1)}</td></tr>`;
+  }).join('');
+  $('#dow-table').innerHTML = `<thead><tr><th>曜日</th><th class="num">実際</th><th class="num">試算</th><th class="num">差</th></tr></thead><tbody>${rowsHtml}</tbody>`;
+  const drivers = Math.ceil(weekNeed / 5);
+  const lp = Object.entries(RS.loadPeak).filter(([, v]) => v.days);
+  $('#staff-points').innerHTML = !RS.rows.length ? '<li class="empty">この期間のデータはありません。</li>' : [
+    ['ドライバー（交代要員こみ）', `${drivers}人`, `1週間でのべ${weekNeed}台・日（各曜日の試算を切り上げ）。1人週5日勤務として計算。今は${VEHICLES.length}人`],
+    ...lp.map(([name, v]) => [`積込の人員：${name}`, `${v.max}人`, `同時に積込していた台数は最大${v.max}台（1日の最大の平均は${fmt(v.sumMax / v.days, 1)}台）`]),
+  ].map(([k, v, n]) => `<li><span class="k">${esc(k)}</span><span class="v">${v}</span><span class="n">${n}</span></li>`).join('');
+}
+
+function renderSim() {
+  if (!RS) return;
+  const dows = dowsOf(sim.dow);
+  const days = dows.reduce((a, d) => a + RS.dayCount[d], 0);
+  if (!sim.counts) {
+    sim.counts = {};
+    for (const x of ROUTES) sim.counts[x.id] = days ? Math.round(dows.reduce((a, d) => a + RS.per[x.id].byDow[d], 0) / days) : 0;
+  }
+  $('#sim-routes').innerHTML = ROUTES.map((x) => {
+    const n = sim.counts[x.id];
+    return `<div class="sr"><div class="nm"><span class="rid">${x.id}</span>${esc(x.name)}<small>1便 平均 ${hm(RS.avgDur[x.id])}</small></div>` +
+      `<div class="step"><button type="button" data-id="${x.id}" data-d="-1" aria-label="${x.id}ルートの便数を減らす"${n <= 0 ? ' disabled' : ''}>−</button>` +
+      `<output aria-live="polite" aria-label="${x.id}ルートの便数">${n}</output>` +
+      `<button type="button" data-id="${x.id}" data-d="1" aria-label="${x.id}ルートの便数を増やす"${n >= 9 ? ' disabled' : ''}>＋</button></div></div>`;
+  }).join('');
+
+  const items = [];
+  ROUTES.forEach((x) => { for (let i = 0; i < sim.counts[x.id]; i++) items.push({ route: x.id, dur: RS.avgDur[x.id] }); });
+  const bins = pack(items, sim.cap);
+  const cmp = dowCompare();
+  const act = dows.reduce((a, d) => a + cmp[d].actual, 0), actDays = dows.reduce((a, d) => a + cmp[d].days, 0);
+  const actAvg = actDays ? act / actDays : null;
+  const total = sum(items, (t) => t.dur);
+  const label = SIM_DOWS.find(([k]) => k === sim.dow)[1];
+  const diff = actAvg == null || !items.length ? ''
+    : bins.length < actAvg - 0.05 ? `<span class="up">${fmt(actAvg - bins.length, 1)}台少なく回せる計算</span>`
+    : bins.length > actAvg + 0.05 ? `<span class="down">${fmt(bins.length - actAvg, 1)}台多く必要</span>` : '実績とほぼ同じ';
+  $('#sim-res').innerHTML = [
+    ['必要な台数', `${bins.length}<small>台</small>`, actAvg == null ? '' : `${label}の実績は平均${fmt(actAvg, 1)}台。${diff}`],
+    ['必要なドライバー', `${bins.length}<small>人</small>`, '1台に1人（その日の出勤人数）'],
+    ['便の合計時間', `${fmt(total / 60, 1)}<small>時間</small>`, `${items.length}便。休憩を除く`],
+  ].map(([l, v, s]) => `<div class="kpi"><div class="label">${l}</div><div class="value">${v}</div><div class="sub">${s}</div></div>`).join('');
+  drawPlan($('#sim-chart'), bins, sim.cap);
+}
+
+function roundRight(x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+}
+
+function drawPlan(el, bins, capH) {
+  if (!bins.length) { el.innerHTML = '<p class="empty">便の数を入れてください。</p>'; return; }
+  const W = Math.max(280, el.clientWidth);
+  const rowH = 28, gap = 10, m = { l: 54, r: 14, t: 28, b: 24 };
+  const maxH = Math.ceil(Math.max(capH * 60, ...bins.map((b) => b.used + BREAK_MIN)) / 60);
+  const H = m.t + bins.length * (rowH + gap) - gap + m.b;
+  const pw = W - m.l - m.r;
+  const x = (min) => m.l + (min / (maxH * 60)) * pw;
+  const stepH = pw / maxH < 34 ? 2 : 1;
+  let s = '';
+  for (let h = 0; h <= maxH; h += stepH) {
+    s += `<line class="${h === 0 ? 'baseline' : 'gridline'}" x1="${x(h * 60)}" x2="${x(h * 60)}" y1="${m.t - 4}" y2="${H - m.b}"/>`;
+    if (h) s += `<text x="${x(h * 60)}" y="${H - 8}" text-anchor="middle">${h}</text>`;
+  }
+  s += `<text x="${m.l - 8}" y="${H - 8}" text-anchor="end">時間</text>`;
+  bins.forEach((b, i) => {
+    const y = m.t + i * (rowH + gap);
+    s += `<text class="row-lbl" x="${m.l - 8}" y="${y + rowH / 2 + 4}" text-anchor="end">${i + 1}台目</text>`;
+    const segs = [];
+    b.items.forEach((it, j) => { segs.push({ ...it, kind: 'trip' }); if (j === 0 && b.items.length > 1) segs.push({ kind: 'brk', dur: BREAK_MIN }); });
+    if (b.items.length === 1) segs.push({ kind: 'brk', dur: BREAK_MIN }); // 1便だけの車両も休憩1時間ぶんを含める
+    const totalMin = b.used + BREAK_MIN;
+    let t = 0;
+    segs.forEach((sg, k) => {
+      const x0 = x(t) + (k ? 1 : 0), x1 = x(t + sg.dur) - (k < segs.length - 1 ? 1 : 0);
+      const w = Math.max(1, x1 - x0);
+      const tipTxt = sg.kind === 'trip'
+        ? `<b>${i + 1}台目：${sg.route} ${esc(RMAP[sg.route].name)}</b><br>1便 平均 ${hm(sg.dur)}<br>この車両の合計 ${hm(totalMin)}（休憩こみ）`
+        : `<b>${i + 1}台目：休憩</b><br>1時間で計算<br>この車両の合計 ${hm(totalMin)}（休憩こみ）`;
+      const cls = sg.kind === 'trip' ? 'seg-trip' : 'seg-brk';
+      s += k === segs.length - 1
+        ? `<path class="${cls}" d="${roundRight(x0, y, w, rowH, 4)}" data-tip="${esc(tipTxt)}"/>`
+        : `<rect class="${cls}" x="${x0}" y="${y}" width="${w}" height="${rowH}" data-tip="${esc(tipTxt)}"/>`;
+      if (sg.kind === 'trip') {
+        const lbl = w > 56 ? `${sg.route} ${hmc(sg.dur)}` : w > 16 ? sg.route : '';
+        if (lbl) s += `<text class="seg-lbl" x="${x0 + w / 2}" y="${y + rowH / 2 + 4}" text-anchor="middle" pointer-events="none">${lbl}</text>`;
+      } else if (w > 30) s += `<text class="brk-lbl" x="${x0 + w / 2}" y="${y + rowH / 2 + 4}" text-anchor="middle" pointer-events="none">休憩</text>`;
+      t += sg.dur;
+    });
+  });
+  const cx = x(capH * 60);
+  s += `<line class="cap-line" x1="${cx}" x2="${cx}" y1="${m.t - 10}" y2="${H - m.b}"/>`;
+  s += `<text class="cap-lbl" x="${cx}" y="${m.t - 14}" text-anchor="${cx > W - 70 ? 'end' : 'middle'}">上限 ${capH}時間</text>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="必要な台数の組み合わせ案。${bins.length}台。${bins.map((b, i) => `${i + 1}台目は${b.items.map((it) => it.route).join('と')}`).join('、')}">${s}</svg>`;
+}
+
 function renderAll() {
   $('#asof').textContent = `更新 ${fromMin(nowMin)}`;
-  renderKpis(); renderToday(); renderHourly(); renderDaily(); renderVehicles(); renderCalendar(); renderNg();
+  renderKpis(); renderToday(); renderHourly(); renderRoutes(); renderDaily(); renderVehicles(); renderCalendar(); renderNg();
 }
 
 // ---------- 絞り込み ----------
@@ -798,6 +1061,23 @@ $('#period').addEventListener('click', (e) => {
   state.period = b.dataset.p;
   document.querySelectorAll('#period button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
   renderAll();
+});
+
+$('#sim-dow').innerHTML = SIM_DOWS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
+$('#sim-dow').addEventListener('change', (e) => { sim.dow = e.target.value; sim.counts = null; renderSim(); });
+$('#sim-cap').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  sim.cap = Number(b.dataset.c);
+  document.querySelectorAll('#sim-cap button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  renderDow(); renderSim();
+});
+$('#sim-routes').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-id]'); if (!b || b.disabled) return;
+  const id = b.dataset.id, d = b.dataset.d;
+  sim.counts[id] = Math.min(9, Math.max(0, sim.counts[id] + Number(d)));
+  renderSim();
+  const again = document.querySelector(`#sim-routes button[data-id="${id}"][data-d="${d}"]`);
+  if (again && !again.disabled) again.focus();
 });
 
 // ---------- ツールチップ ----------
@@ -817,9 +1097,10 @@ document.addEventListener('pointerleave', () => tip.classList.remove('on'));
 addEventListener('scroll', () => tip.classList.remove('on'), { passive: true });
 
 let rz;
-const ro = new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { renderDaily(); renderHourly(); }, 80); });
+const ro = new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { renderDaily(); renderHourly(); renderSim(); }, 80); });
 ro.observe($('#daily-chart'));
 ro.observe($('#work-chart'));
+ro.observe($('#sim-chart'));
 renderAll();
 </script>
 </body>

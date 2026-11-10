@@ -18,6 +18,10 @@
   --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
   --good-tint: #e3f3e3; --good-ink: #006300; --rest: #eef1f4;
   --tip-bg: #1c2430; --tip-ink: #ffffff;
+  /* 3系列（積込・荷降ろし・待機） */
+  --s1: #0068b6; --s2: #eb6834; --s3: #1baf7a;
+  /* 濃淡（少ない→多い） */
+  --h1: #cde2fb; --h2: #9ec5f4; --h3: #6da7ec; --h4: #3987e5; --h5: #256abf; --h6: #104281;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -28,6 +32,8 @@
     --series: #3393db; --series-dim: #33415c;
     --good-tint: #163521; --good-ink: #5fd35f; --rest: #1a2539;
     --tip-bg: #eef2f7; --tip-ink: #151f33;
+    --s1: #3393db; --s2: #d95926; --s3: #199e70;
+    --h1: #184f95; --h2: #256abf; --h3: #3987e5; --h4: #6da7ec; --h5: #9ec5f4; --h6: #cde2fb;
   }
 }
 :root[data-theme="dark"] {
@@ -38,6 +44,8 @@
   --series: #3393db; --series-dim: #33415c;
   --good-tint: #163521; --good-ink: #5fd35f; --rest: #1a2539;
   --tip-bg: #eef2f7; --tip-ink: #151f33;
+  --s1: #3393db; --s2: #d95926; --s3: #199e70;
+  --h1: #184f95; --h2: #256abf; --h3: #3987e5; --h4: #6da7ec; --h5: #9ec5f4; --h6: #cde2fb;
 }
 
 * { box-sizing: border-box; }
@@ -133,6 +141,30 @@ tr:last-child td { border-bottom: 0; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend .cell { width: 18px; height: 18px; font-size: 10px; }
 
+/* 時間帯別の稼働 */
+.heat { display: grid; gap: 3px; align-items: center; min-width: 560px; }
+.heat .h { font-size: 10.5px; color: var(--muted); text-align: center; }
+.heat .dn { font-size: 13px; font-weight: 600; }
+.heat .dn.sun { color: var(--critical); }
+.hc { height: 26px; border-radius: 4px; background: var(--rest); }
+.hc.peak { outline: 2px solid var(--ink); outline-offset: 1px; }
+.b1 { background: var(--h1); } .b2 { background: var(--h2); } .b3 { background: var(--h3); }
+.b4 { background: var(--h4); } .b5 { background: var(--h5); } .b6 { background: var(--h6); }
+.ramp { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); margin-top: 12px; flex-wrap: wrap; }
+.ramp i { width: 22px; height: 12px; border-radius: 3px; display: inline-block; }
+.ramp .z { background: var(--rest); }
+.ramp .pk { width: 14px; height: 12px; outline: 2px solid var(--ink); outline-offset: -2px; margin-left: 14px; }
+.swatches { display: flex; gap: 6px 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); margin-bottom: 6px; }
+.swatches span { display: inline-flex; align-items: center; gap: 6px; }
+.swatches i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.chart .s1 { fill: var(--s1); } .chart .s2 { fill: var(--s2); } .chart .s3 { fill: var(--s3); }
+.points { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.points li { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--grid); }
+.points li:last-child { border-bottom: 0; padding-bottom: 0; }
+.points .k { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.points .v { font-size: 18px; font-weight: 800; }
+.points .n { font-size: 12.5px; color: var(--ink-2); }
+
 details.tv { margin-top: 10px; }
 details.tv summary { font-size: 13px; color: var(--brand); cursor: pointer; width: max-content; }
 :root[data-theme="dark"] details.tv summary { color: var(--series); }
@@ -180,6 +212,25 @@ footer { max-width: 1240px; margin: 0 auto; padding: 0 16px 32px; font-size: 12p
         <div><h2>本日の運行状況</h2><p class="desc" id="today-desc"></p></div>
       </div>
       <div class="table-wrap"><table id="today-table"></table></div>
+    </section>
+
+    <section class="card s12">
+      <div class="card-head"><div><h2>時間帯別の稼働（曜日 × 時間）</h2><p class="desc" id="heat-desc"></p></div></div>
+      <div class="table-wrap"><div class="heat" id="heat"></div></div>
+      <div class="ramp" id="heat-ramp"></div>
+      <details class="tv"><summary>表で見る</summary><div class="table-wrap"><table id="heat-table"></table></div></details>
+    </section>
+
+    <section class="card s8">
+      <div class="card-head"><div><h2>時間帯別の作業件数</h2><p class="desc">1日あたりの平均。日報の運行記録で、作業を始めた時刻で数えています。</p></div></div>
+      <div class="swatches" id="work-legend"></div>
+      <div class="chart" id="work-chart"></div>
+      <details class="tv"><summary>表で見る</summary><div class="table-wrap"><table id="work-table"></table></div></details>
+    </section>
+
+    <section class="card s4">
+      <div class="card-head"><div><h2>稼働のポイント</h2><p class="desc" id="points-desc"></p></div></div>
+      <ul class="points" id="points"></ul>
     </section>
 
     <section class="card s8">
@@ -291,13 +342,16 @@ for (let back = DAYS - 1; back >= 0; back--) {
   for (const v of VEHICLES) {
     const r = { date, vid: v.id, dow: d.getDay(), worked: true, insp: 'ok', ngs: [], km: 0, fuel: 0, toll: 0, stops: 0, alc: [0, 0] };
     // 日曜は運休。平日もたまに運休
-    if (!isToday && (d.getDay() === 0 || rnd() < 0.05)) { r.worked = false; r.insp = null; records.push(r); continue; }
+    // 日曜は運休。土曜は半分ほど、平日もたまに運休
+    if (!isToday && (d.getDay() === 0 || rnd() < (d.getDay() === 6 ? 0.45 : 0.05))) { r.worked = false; r.insp = null; records.push(r); continue; }
     r.km = Math.round(v.base * (0.72 + rnd() * 0.56));
     r.fuel = Math.round((r.km / (v.eff * (0.92 + rnd() * 0.16))) * 10) / 10;
     r.toll = rnd() < 0.55 ? Math.round((800 + rnd() * 4200) / 10) * 10 : 0;
     r.stops = 2 + Math.floor(rnd() * 5);
     r.out = fromMin(toMin(v.out) + Math.floor(rnd() * 20) - 10);
     r.in = fromMin(toMin(v.in) + Math.floor(rnd() * 40) - 20);
+    if (d.getDay() === 1) r.out = fromMin(toMin(r.out) - 25); // 月曜は荷物が多く早出
+    if (d.getDay() === 6) r.in = fromMin(toMin(r.in) - 120);  // 土曜は早めに終わる
     if (rnd() < 0.025) r.insp = 'none';
     else if (rnd() < 0.11) {
       const id = pick(NG_POOL.map(([i, w]) => [i, w]));
@@ -320,6 +374,57 @@ for (const r of records.filter((x) => x.date === TODAY)) {
   if (!back) { r.km = 0; r.fuel = 0; r.toll = 0; } // 帰庫前は未確定
   // 4号車は途中から圏外（最終受信が古い）
   r.lastSync = r.vid === 'v4' ? Math.min(toMin(r.out) + 25, nowMin) : back ? toMin(r.in) + 2 : nowMin - (3 + Math.floor(rnd() * 12));
+}
+
+// 日報の「運行記録」のサンプル（積込・荷降ろし・待機・休憩）。場所の名前は架空
+const LOAD_PLACES = [
+  { name: '相模原センター', w: 5, waitP: 0.6, wait: [20, 55] },
+  { name: '座間倉庫', w: 3, waitP: 0.3, wait: [10, 30] },
+  { name: '厚木工場', w: 2, waitP: 0.2, wait: [10, 25] },
+];
+const DROP_PLACES = ['町田店', '八王子店', '海老名店', '橋本店', '大和店', '厚木店', '藤沢店', '横浜青葉店'];
+const r2 = mulberry32(777);
+const rr = (a, b) => a + r2() * (b - a);
+const pickLoad = () => { let x = r2() * 10; for (const p of LOAD_PLACES) { if ((x -= p.w) < 0) return p; } return LOAD_PLACES[0]; };
+for (const r of records) {
+  if (!r.worked) continue;
+  const seq = [];
+  const load = () => {
+    const p = pickLoad();
+    seq.push({ gap: rr(15, 35) });
+    if (r2() < p.waitP) seq.push({ kind: '待機', place: p.name, dur: rr(p.wait[0], p.wait[1]) });
+    seq.push({ kind: '積込', place: p.name, dur: rr(20, 40) });
+  };
+  const drop = () => {
+    const place = DROP_PLACES[Math.floor(r2() * DROP_PLACES.length)];
+    seq.push({ gap: rr(20, 50) });
+    if (r2() < 0.2) seq.push({ kind: '待機', place, dur: rr(10, 30) });
+    seq.push({ kind: '荷降ろし', place, dur: rr(15, 35) });
+  };
+  load();
+  const mid = Math.max(1, Math.floor(r.stops / 2));
+  for (let i = 0; i < r.stops; i++) {
+    drop();
+    if (i === mid - 1) {
+      seq.push({ gap: rr(10, 20) });
+      seq.push({ kind: '休憩', place: '', dur: rr(40, 60) });
+      if (r2() < 0.35) load(); // 午後にもう一度積む便
+    }
+  }
+  seq.push({ gap: rr(25, 45) });
+  // 出庫〜帰庫の時間に収まるよう、移動時間だけを伸び縮みさせる
+  const o = toMin(r.out), span = toMin(r.in) - o;
+  const workMin = seq.reduce((s, x) => s + (x.dur || 0), 0);
+  const gapMin = seq.reduce((s, x) => s + (x.gap || 0), 0);
+  const k = Math.max(0.6, (span - workMin) / gapMin);
+  let t = o;
+  r.events = [];
+  for (const x of seq) {
+    if (x.gap) { t += x.gap * k; continue; }
+    const start = Math.round(t);
+    t += x.dur;
+    r.events.push({ kind: x.kind, place: x.place, start, end: Math.round(t) });
+  }
 }
 
 // ====================================================================
@@ -533,9 +638,156 @@ function renderNg() {
     : '<tbody><tr><td class="empty">この期間のNGはありません。</td></tr></tbody>';
 }
 
+// ---------- 時間帯別の稼働 ----------
+const H0 = 5, H1 = 21; // 5時台〜20時台
+const HOURS = Array.from({ length: H1 - H0 }, (_, i) => H0 + i);
+const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const KINDS = [{ k: '積込', c: 's1' }, { k: '荷降ろし', c: 's2' }, { k: '待機', c: 's3' }];
+const argmax = (arr) => arr.reduce((bi, v, i) => (v > arr[bi] ? i : bi), 0);
+const hm = (min) => `${Math.floor(min / 60)}時間${pad(Math.round(min % 60))}分`;
+
+function hourlyStats() {
+  const dates = periodDates().filter((d) => d !== TODAY); // 本日分は途中なので含めない
+  const set = new Set(dates);
+  const rows = records.filter((r) => set.has(r.date) && inVehicle(r) && r.worked);
+  const dayCount = Array(7).fill(0);
+  dates.forEach((d) => dayCount[new Date(d + 'T00:00').getDay()]++);
+  const heat = Array.from({ length: 7 }, () => Array(24).fill(0));
+  const work = Array.from({ length: 24 }, () => ({ 積込: 0, 荷降ろし: 0, 待機: 0 }));
+  const waitMin = Array(24).fill(0);
+  let bind = 0;
+  for (const r of rows) {
+    const o = toMin(r.out), i = toMin(r.in);
+    bind += i - o;
+    // 1時間ごとに「外に出ていた時間」を足す（30分だけなら0.5台）
+    for (let h = 0; h < 24; h++) heat[r.dow][h] += Math.max(0, Math.min(i, (h + 1) * 60) - Math.max(o, h * 60)) / 60;
+    for (const e of r.events || []) {
+      const h = Math.floor(e.start / 60);
+      if (work[h] && e.kind in work[h]) work[h][e.kind]++;
+      if (e.kind === '待機') waitMin[h] += e.end - e.start;
+    }
+  }
+  return {
+    rows, dayCount, work, waitMin, bind,
+    avg: heat.map((row, d) => row.map((v) => (dayCount[d] ? v / dayCount[d] : null))),
+    opDays: new Set(rows.map((r) => r.date)).size,
+    fleet: state.vehicle === 'all' ? VEHICLES.length : 1,
+  };
+}
+
+function drawStacked(el, data) {
+  const W = Math.max(280, el.clientWidth);
+  const H = 240, m = { l: 40, r: 8, t: 18, b: 26 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const tot = data.map((d) => d.vals.reduce((a, b) => a + b, 0));
+  const top = Math.max(...tot, 0.1);
+  const step = niceStep(top);
+  const max = Math.ceil(top / step) * step;
+  const y = (v) => m.t + ph - (v / max) * ph;
+  const bw = pw / data.length;
+  const barW = Math.max(4, Math.min(30, bw - 6));
+  let s = '';
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    s += `<line class="${v === 0 ? 'baseline' : 'gridline'}" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/>`;
+    s += `<text x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${fmt(v, step < 1 ? 1 : 0)}</text>`;
+  }
+  const every = Math.max(1, Math.ceil(data.length / Math.max(1, Math.floor(pw / 34))));
+  const peakI = argmax(tot);
+  data.forEach((d, i) => {
+    const x0 = m.l + i * bw;
+    const bx = x0 + (bw - barW) / 2;
+    s += `<rect class="hit" x="${x0}" y="${m.t}" width="${bw}" height="${ph}" data-tip="${esc(d.tip)}"/>`;
+    const nz = d.vals.map((v, j) => (v > 0 ? j : -1)).filter((j) => j >= 0);
+    let cum = 0;
+    nz.forEach((j, n) => {
+      const v = d.vals[j];
+      const yTop = y(cum + v);
+      const yBot = y(cum) - (n > 0 ? 2 : 0); // 積み重ねの間に2pxのすき間
+      cum += v;
+      const h = yBot - yTop;
+      if (h <= 0.5) return;
+      s += n === nz.length - 1
+        ? `<path class="${KINDS[j].c}" d="${roundTop(bx, yTop, barW, h, 4)}" pointer-events="none"/>`
+        : `<rect class="${KINDS[j].c}" x="${bx}" y="${yTop}" width="${barW}" height="${h}" pointer-events="none"/>`;
+    });
+    if (i % every === 0) s += `<text x="${x0 + bw / 2}" y="${H - 8}" text-anchor="middle">${d.h}時</text>`;
+    if (i === peakI && tot[i] > 0) s += `<text class="peak" x="${x0 + bw / 2}" y="${y(tot[i]) - 6}" text-anchor="middle">${fmt(tot[i], 1)}</text>`;
+  });
+  s += `<text x="${m.l - 8}" y="${m.t - 8}" text-anchor="end">件/日</text>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="時間帯別の作業件数の積み上げ棒グラフ">${s}</svg>`;
+}
+
+function renderHourly() {
+  const st = hourlyStats();
+  const scope = state.vehicle === 'all' ? `全${VEHICLES.length}台` : VMAP[state.vehicle].name;
+
+  // 曜日×時間のヒートマップ
+  let max = 0;
+  DOW_ORDER.forEach((d) => HOURS.forEach((h) => { const v = st.avg[d][h]; if (v != null && v > max) max = v; }));
+  // ピークは「1マス」ではなく、時間の幅と曜日で示す（同じ値が並びやすいため）
+  const wk = DOW_ORDER.filter((d) => st.dayCount[d] && d !== 0);
+  const prof = HOURS.map((h) => (wk.length ? wk.reduce((a, d) => a + (st.avg[d][h] || 0), 0) / wk.length : 0));
+  const pMax = Math.max(...prof, 0);
+  const pk = HOURS.filter((h, i) => pMax > 0 && prof[i] >= pMax * 0.97);
+  const dayTot = DOW_ORDER.map((d) => ({ d, t: st.dayCount[d] ? HOURS.reduce((a, h) => a + (st.avg[d][h] || 0), 0) : -1 }));
+  const busy = dayTot.reduce((a, b) => (b.t > a.t ? b : a), dayTot[0]);
+  const range = pk.length ? (pk[0] === pk[pk.length - 1] ? `${pk[0]}時台` : `${pk[0]}〜${pk[pk.length - 1]}時台`) : '—';
+  const peak = pMax > 0 ? { range, v: pMax, busy } : null;
+  const el = $('#heat');
+  el.style.gridTemplateColumns = `34px repeat(${HOURS.length}, minmax(26px, 1fr))`;
+  let s = '<span></span>' + HOURS.map((h) => `<span class="h">${h}時</span>`).join('');
+  for (const d of DOW_ORDER) {
+    s += `<span class="dn${d === 0 ? ' sun' : ''}">${WD[d]}</span>`;
+    for (const h of HOURS) {
+      const v = st.avg[d][h];
+      const bin = !v || max === 0 ? 0 : Math.min(6, Math.max(1, Math.ceil((v / max) * 6)));
+      const body = v == null ? 'この期間に該当する日がありません' : v === 0 ? '稼働なし' : `平均 ${fmt(v, 1)}台が稼働中<br>稼働率 ${fmt((v / st.fleet) * 100)}%（${scope}のうち）`;
+      s += `<span class="hc${bin ? ' b' + bin : ''}" data-tip="${esc(`<b>${WD[d]}曜 ${h}時台</b><br>${body}`)}"></span>`;
+    }
+  }
+  el.innerHTML = s;
+  $('#heat-ramp').innerHTML = '<span>少ない</span><i class="z"></i>' + [1, 2, 3, 4, 5, 6].map((b) => `<i class="b${b}"></i>`).join('') + '<span>多い</span>';
+  $('#heat-desc').textContent = peak
+    ? `${scope}・選んだ期間の曜日ごとの平均（本日分は含みません）。平日・土曜でならすと ${peak.range} がいちばん多く平均 ${fmt(peak.v, 1)}台（稼働率 ${fmt((peak.v / st.fleet) * 100)}%）。いちばん忙しい曜日は${WD[peak.busy.d]}曜。`
+    : 'この期間のデータはありません。';
+  $('#heat-table').innerHTML = `<thead><tr><th>曜日</th>${HOURS.map((h) => `<th class="num">${h}時</th>`).join('')}</tr></thead><tbody>` +
+    DOW_ORDER.map((d) => `<tr><td>${WD[d]}</td>${HOURS.map((h) => `<td class="num">${st.avg[d][h] == null ? '—' : fmt(st.avg[d][h], 1)}</td>`).join('')}</tr>`).join('') + '</tbody>';
+
+  // 時間帯別の作業件数（1日平均）
+  const perDay = (n) => (st.opDays ? n / st.opDays : 0);
+  const data = HOURS.map((h) => {
+    const vals = KINDS.map(({ k }) => perDay(st.work[h][k]));
+    const w = st.work[h]['待機'] ? st.waitMin[h] / st.work[h]['待機'] : 0;
+    return {
+      h, vals,
+      tip: `<b>${h}時台（1日平均）</b><br>積込 ${fmt(vals[0], 1)}件<br>荷降ろし ${fmt(vals[1], 1)}件<br>待機 ${fmt(vals[2], 1)}件${w ? `（1回 平均${fmt(w)}分）` : ''}`,
+    };
+  });
+  $('#work-legend').innerHTML = KINDS.map(({ k, c }) => `<span><i style="background:var(--${c})"></i>${k}</span>`).join('');
+  drawStacked($('#work-chart'), data);
+  $('#work-table').innerHTML = '<thead><tr><th>時間帯</th><th class="num">積込</th><th class="num">荷降ろし</th><th class="num">待機</th><th class="num">待機 合計</th></tr></thead><tbody>' +
+    data.map((d) => `<tr><td>${d.h}時台</td>${d.vals.map((v) => `<td class="num">${fmt(v, 1)}件</td>`).join('')}<td class="num">${fmt(perDay(st.waitMin[d.h]))}分</td></tr>`).join('') + '</tbody>';
+
+  // 稼働のポイント
+  const col = (k) => HOURS.map((h) => st.work[h][k]);
+  const hLoad = HOURS[argmax(col('積込'))], hDrop = HOURS[argmax(col('荷降ろし'))];
+  const waits = HOURS.map((h) => st.waitMin[h]);
+  const hWait = HOURS[argmax(waits)];
+  const waitCount = sum(HOURS, (h) => st.work[h]['待機']);
+  const waitTotal = sum(HOURS, (h) => st.waitMin[h]);
+  $('#points-desc').textContent = `${scope}・選んだ期間（本日分は含みません）`;
+  $('#points').innerHTML = !st.rows.length ? '<li class="empty">この期間のデータはありません。</li>' : [
+    ['いちばん稼働が多い時間', peak ? peak.range : '—', peak ? `平均 ${fmt(peak.v, 1)}台が外に出ています（いちばん忙しいのは${WD[peak.busy.d]}曜）` : ''],
+    ['積込が集中する時間', `${hLoad}時台`, `1日平均 ${fmt(perDay(st.work[hLoad]['積込']), 1)}件`],
+    ['荷降ろしが集中する時間', `${hDrop}時台`, `1日平均 ${fmt(perDay(st.work[hDrop]['荷降ろし']), 1)}件`],
+    ['待機（荷待ち）が多い時間', `${hWait}時台`, `1日平均 ${fmt(perDay(st.waitMin[hWait]))}分。全体では1回 平均${fmt(waitCount ? waitTotal / waitCount : 0)}分`],
+    ['平均の拘束時間', hm(st.bind / st.rows.length), '出庫から帰庫まで（1台1日あたり）'],
+  ].map(([k, v, n]) => `<li><span class="k">${k}</span><span class="v">${v}</span><span class="n">${n}</span></li>`).join('');
+}
+
 function renderAll() {
   $('#asof').textContent = `更新 ${fromMin(nowMin)}`;
-  renderKpis(); renderToday(); renderDaily(); renderVehicles(); renderCalendar(); renderNg();
+  renderKpis(); renderToday(); renderHourly(); renderDaily(); renderVehicles(); renderCalendar(); renderNg();
 }
 
 // ---------- 絞り込み ----------
@@ -565,7 +817,9 @@ document.addEventListener('pointerleave', () => tip.classList.remove('on'));
 addEventListener('scroll', () => tip.classList.remove('on'), { passive: true });
 
 let rz;
-new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(renderDaily, 80); }).observe($('#daily-chart'));
+const ro = new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { renderDaily(); renderHourly(); }, 80); });
+ro.observe($('#daily-chart'));
+ro.observe($('#work-chart'));
 renderAll();
 </script>
 </body>

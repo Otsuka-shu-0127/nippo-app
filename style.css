@@ -45,8 +45,8 @@ html, body {
 .title { display: flex; flex-direction: column; line-height: 1.15; flex: none; }
 .title small { font-size: 12px; font-weight: 400; opacity: .85; letter-spacing: .05em; }
 .title span { font-size: 20px; font-weight: 700; }
-.status { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 0; }
-.status-row { display: flex; gap: 6px; }
+.status { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 .pill {
   font-size: 12px;
@@ -69,8 +69,8 @@ html, body {
 }
 .pill.vehicle svg { flex: none; }
 #vehicle-name { font-size: 15px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
-.pill.net { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
-.pill.net svg { flex: none; }
+.pill.net { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; flex: none; }
+.pill.net svg { flex: none; width: 18px; height: 18px; }
 .pill.net .ic-off, .pill.net.offline .ic-on { display: none; }
 .pill.net.offline .ic-off { display: block; }
 

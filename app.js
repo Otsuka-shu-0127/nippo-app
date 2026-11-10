@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v3.2';
+const APP_VERSION = 'v3.3';
 
 // ---------- スマホ内の保存（IndexedDB） ----------
 // 日報と点検を同じ保存場所に入れ、type で区別する（'nippo' / 'inspection'）
@@ -230,7 +230,9 @@ async function refreshPending() {
 
 function updateNetStatus() {
   const el = $('#net');
-  $('#net-text').textContent = navigator.onLine ? 'オンライン' : 'オフライン';
+  const label = navigator.onLine ? 'オンライン' : 'オフライン';
+  $('#net-text').textContent = label;
+  el.title = label;
   el.className = 'pill net ' + (navigator.onLine ? 'online' : 'offline');
 }
 

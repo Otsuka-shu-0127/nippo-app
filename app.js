@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v2';
+const APP_VERSION = 'v3';
 
 // ---------- スマホ内の保存（IndexedDB） ----------
 // 日報と点検を同じ保存場所に入れ、type で区別する（'nippo' / 'inspection'）
@@ -66,7 +66,32 @@ function samplePic(it, ok) {
   return it.img ? ILLUST[it.img](ok) : '';
 }
 
-const sampleEditEnabled = () => getSetting('sampleEdit') !== '0'; // デモ版は初期状態でオン
+// 見本写真の登録・変更は管理者モード中だけ
+const sampleEditEnabled = () => adminUnlocked;
+
+// ---------- 管理者（担当者）ロック ----------
+// ※デモ版の簡易ロックです。本番ではSupabaseのログインと権限で管理者を判定します。
+const DEFAULT_PIN = '1234';
+let adminUnlocked = false;
+
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('nippo-admin:' + pin));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkPin(pin) {
+  const saved = getSetting('pinHash');
+  return (await hashPin(pin)) === (saved || (await hashPin(DEFAULT_PIN)));
+}
+
+function setAdmin(on) {
+  adminUnlocked = on;
+  $('#lock-form').hidden = on;
+  $('#settings-body').hidden = !on;
+  $('#admin-pill').hidden = !on;
+  $('#nav-lock').style.display = on ? 'none' : '';
+  if (on && sampleId && $('#sample').open) renderSampleDialog();
+}
 
 // ---------- 設定（ブラウザ保存） ----------
 function getSetting(key) {
@@ -76,7 +101,8 @@ function setSetting(key, value) {
   try { localStorage.setItem('nippo.' + key, value); } catch { /* 保存できない環境では無視 */ }
 }
 
-const DEFAULT_VEHICLES = ['1号車（2t）', '2号車（4t）', '3号車（4t）', '4号車（10t）'];
+// デモ用の仮の車両（ナンバーは架空）。設定画面で変更できます。
+const DEFAULT_VEHICLES = ['1号車 相模100あ12-34', '2号車 相模100い56-78', '3号車 相模130う90-12', '4号車 相模800え34-56'];
 function getVehicles() {
   const v = getSetting('vehicles').split('\n').map((s) => s.trim()).filter(Boolean);
   return v.length ? v : DEFAULT_VEHICLES;
@@ -172,13 +198,40 @@ function fillVehicleSelects() {
       vehicles.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
     if (vehicles.includes(current)) sel.value = current;
   });
+  updateVehiclePill();
 }
+
+// 選択中の車両：点検・日報の両方とヘッダーに反映
+function setCurrentVehicle(v) {
+  setSetting('vehicle', v);
+  $$('.vehicle-select').forEach((sel) => { if (sel.value !== v) sel.value = v; });
+  updateVehiclePill();
+  updateInspStatus();
+}
+
+function updateVehiclePill() {
+  const v = getSetting('vehicle');
+  const ok = v && getVehicles().includes(v);
+  $('#vehicle-name').textContent = ok ? v : '車両未選択';
+  $('#vehicle-pill').classList.toggle('none', !ok);
+}
+
+$$('.vehicle-select').forEach((sel) => sel.addEventListener('change', () => setCurrentVehicle(sel.value)));
+
+$('#vehicle-pill').addEventListener('click', () => {
+  const current = $('.tab.active').id;
+  if (current !== 'tab-inspect' && current !== 'tab-nippo') showTab('inspect');
+  const sel = $('.tab.active .vehicle-select');
+  window.scrollTo({ top: 0 });
+  sel.focus();
+  if (sel.showPicker) { try { sel.showPicker(); } catch { /* 対応していない場合は無視 */ } }
+});
 
 async function refreshPending() {
   const records = await getAllRecords();
   const n = records.filter((r) => r.status === 'pending').length;
-  const el = $('#pending');
-  el.textContent = `未送信 ${n}件`;
+  const el = $('#nav-pending');
+  el.textContent = n > 99 ? '99+' : String(n);
   el.hidden = n === 0;
 }
 
@@ -259,11 +312,39 @@ function renderItem(id) {
   $('.photo-btn', el).firstChild.textContent = photos.length ? '📷 写真を追加' : (st.result === 'ng' ? '📷 NG箇所の写真を撮る' : '📷 写真を撮る（任意）');
 }
 
+// 点検の進み具合：項目を選ぶたびにトラックが右へ進む
+let lastDone = 0;
 function updateProgress() {
   const total = ALL_ITEMS.length;
   const done = ALL_ITEMS.filter((i) => inspState[i.id]?.result).length;
   const ng = ALL_ITEMS.filter((i) => inspState[i.id]?.result === 'ng').length;
-  $('#insp-bar').style.width = `${(done / total) * 100}%`;
+  const p = done / total;
+  const complete = done === total;
+
+  const road = $('#road');
+  road.style.setProperty('--p', p);
+  // 通った道を水色にする（トラックの後ろまで）
+  $('#done-lane').style.width = p === 0 ? '0px' : `calc(40px + (100% - 154px) * ${p} + 30px)`;
+  road.classList.toggle('complete', complete);
+  road.classList.toggle('all-ok', complete && ng === 0);
+  road.classList.toggle('has-ng', ng > 0);
+  $('#road-alert').hidden = ng === 0;
+  $('#goal-flag').setAttribute('fill', complete ? (ng ? '#d93025' : '#2ea05a') : '#e8b849');
+
+  let msg;
+  if (done === 0) msg = '点検スタート！';
+  else if (complete) msg = ng ? `NG ${ng}件　管理者に報告を` : '点検完了！出発OK';
+  else msg = `あと ${total - done} 項目${ng ? `（NG ${ng}）` : ''}`;
+  $('#road-bubble').textContent = msg;
+
+  if (done > lastDone) {
+    const truck = $('#road-truck');
+    truck.classList.remove('moving');
+    void truck.offsetWidth; // アニメーションをやり直す
+    truck.classList.add('moving');
+  }
+  lastDone = done;
+
   $('#insp-count').textContent = `${done} / ${total} 項目`;
   const ngEl = $('#insp-ng');
   ngEl.textContent = `NG ${ng}件`;
@@ -714,12 +795,37 @@ $('#save-settings').addEventListener('click', () => {
     return;
   }
   setSetting('endpoint', url);
-  setSetting('sampleEdit', $('#sample-edit').checked ? '1' : '0');
   setSetting('vehicles', $('#vehicles').value.split('\n').map((s) => s.trim()).filter(Boolean).join('\n'));
   $('#vehicles').value = getVehicles().join('\n');
   fillVehicleSelects();
   toast('設定を保存しました');
   sync();
+});
+
+$('#lock-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = $('#pin-input');
+  if (await checkPin(input.value)) {
+    input.value = '';
+    setAdmin(true);
+    toast('管理者モードにしました');
+  } else {
+    input.value = '';
+    toast('PINが違います');
+  }
+});
+
+$('#lock-now').addEventListener('click', () => {
+  setAdmin(false);
+  toast('設定をロックしました');
+});
+
+$('#change-pin').addEventListener('click', async () => {
+  const pin = $('#new-pin').value.trim();
+  if (!/^\d{4,8}$/.test(pin)) { toast('PINは4〜8桁の数字で入力してください'); return; }
+  setSetting('pinHash', await hashPin(pin));
+  $('#new-pin').value = '';
+  toast('管理者PINを変更しました');
 });
 
 function downloadCSV(name, head, rows) {
@@ -771,7 +877,7 @@ async function showStorageInfo() {
 
 // ---------- タブ切り替え ----------
 function showTab(name) {
-  $$('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+  $$('.bottom-nav button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
   $$('.tab').forEach((t) => t.classList.toggle('active', t.id === 'tab-' + name));
   if (name === 'history') renderHistory();
   if (name === 'nippo') {
@@ -786,7 +892,7 @@ function showTab(name) {
   }
   window.scrollTo({ top: 0 });
 }
-$$('.tabs button').forEach((btn) => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+$$('.bottom-nav button').forEach((btn) => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
 
 // ---------- 起動 ----------
 window.addEventListener('online', () => { updateNetStatus(); sync(); });
@@ -801,7 +907,7 @@ if ('serviceWorker' in navigator) {
 $('#version').textContent = APP_VERSION;
 $('#endpoint').value = getSetting('endpoint');
 $('#vehicles').value = getVehicles().join('\n');
-$('#sample-edit').checked = sampleEditEnabled();
+setAdmin(false);
 fillVehicleSelects();
 const inspForm = $('#insp-form');
 inspForm.date.value = today();

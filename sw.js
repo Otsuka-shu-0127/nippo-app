@@ -1,6 +1,6 @@
 // アプリ本体をスマホ内に保存して、オフラインでも起動できるようにする
 // アプリを更新したら VERSION を変える（app.js の APP_VERSION も合わせる）
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = 'nippo-' + VERSION;
 const FILES = [
   './',

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1f4e79">
+  <meta name="theme-color" content="#002777">
   <title>運行日報・車両点検</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon-192.png">
@@ -13,19 +13,18 @@
 </head>
 <body>
   <header class="top">
-    <div class="title">運行日報<small>デモ版</small></div>
+    <div class="title"><small>デモ版</small><span>運行日報</span></div>
     <div class="status">
-      <span id="net" class="pill">確認中</span>
-      <span id="pending" class="pill pending" hidden>未送信 0件</span>
+      <button type="button" id="vehicle-pill" class="pill vehicle none" aria-label="選択中の車両">
+        <svg width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><rect x="1" y="2" width="18" height="12" rx="1.5" fill="currentColor"/><path d="M20 6h5l4 5v3h-9z" fill="currentColor"/><circle cx="7" cy="16" r="3" fill="currentColor" stroke="#fff" stroke-width="1.5"/><circle cx="23" cy="16" r="3" fill="currentColor" stroke="#fff" stroke-width="1.5"/></svg>
+        <span id="vehicle-name">車両未選択</span>
+      </button>
+      <div class="status-row">
+        <span id="admin-pill" class="pill admin" hidden>管理者</span>
+        <span id="net" class="pill">確認中</span>
+      </div>
     </div>
   </header>
-
-  <nav class="tabs">
-    <button data-tab="inspect" class="active">点検</button>
-    <button data-tab="nippo">日報</button>
-    <button data-tab="history">履歴</button>
-    <button data-tab="settings">設定</button>
-  </nav>
 
   <main>
     <!-- 運行前点検 -->
@@ -39,7 +38,48 @@
         <label>車両<select name="vehicle" class="vehicle-select" required></select></label>
 
         <div class="progress" id="insp-progress">
-          <div class="bar"><span id="insp-bar"></span></div>
+          <div class="road" id="road" style="--p:0">
+            <div class="lane"></div>
+            <div class="done-lane" id="done-lane"></div>
+            <!-- ドライバー（スマホを持っている） -->
+            <svg class="driver" viewBox="0 0 34 46" aria-hidden="true">
+              <rect x="11" y="32" width="5" height="12" rx="1" fill="#002777"/>
+              <rect x="18" y="32" width="5" height="12" rx="1" fill="#002777"/>
+              <rect x="9" y="18" width="16" height="16" rx="4" fill="#0068b6"/>
+              <rect x="15" y="20" width="4" height="12" fill="#00b3ec" opacity=".8"/>
+              <circle cx="17" cy="11" r="7" fill="#f5d0a9"/>
+              <path d="M9.5 9.5 a7.5 6.5 0 0 1 15 0 z" fill="#002777"/>
+              <rect x="17" y="8" width="10" height="2.2" rx="1" fill="#002777"/>
+              <circle cx="20" cy="12" r="1" fill="#1e1e1e"/>
+              <path d="M21.5 15 q1.5 1 3 0" stroke="#1e1e1e" stroke-width=".8" fill="none"/>
+              <path d="M22 22 l3 3" stroke="#0068b6" stroke-width="3" stroke-linecap="round"/>
+              <rect x="24" y="18" width="7" height="11" rx="1.5" fill="#1e1e1e"/>
+              <rect x="25" y="19.5" width="5" height="7.5" rx=".5" fill="#00b3ec"/>
+            </svg>
+            <div class="bubble" id="road-bubble">点検スタート！</div>
+            <!-- トラック -->
+            <div class="truck" id="road-truck">
+              <svg viewBox="0 0 84 44" width="84" height="44" aria-hidden="true">
+                <rect x="2" y="4" width="56" height="28" rx="2" fill="#eef2f6" stroke="#9aa5b1"/>
+                <path d="M30 4 h10 l-12 28 h-10 z" fill="#00b3ec"/>
+                <path d="M41 4 h6 l-12 28 h-6 z" fill="#0068b6"/>
+                <path d="M59 9 h13 l9 10 v13 h-22 z" fill="#ffffff" stroke="#9aa5b1"/>
+                <path d="M66 11.5 h5 l7 8 h-12 z" fill="#8fd3f0"/>
+                <rect x="59" y="25" width="22" height="7" fill="#002777"/>
+                <rect x="78" y="21" width="3" height="3" rx="1" fill="#e8b849"/>
+                <rect x="2" y="32" width="80" height="3" fill="#002777"/>
+                <circle cx="15" cy="37" r="5.5" fill="#222"/><circle cx="15" cy="37" r="2" fill="#c3cad3"/>
+                <circle cx="28" cy="37" r="5.5" fill="#222"/><circle cx="28" cy="37" r="2" fill="#c3cad3"/>
+                <circle cx="70" cy="37" r="5.5" fill="#222"/><circle cx="70" cy="37" r="2" fill="#c3cad3"/>
+              </svg>
+              <span class="alert" id="road-alert" hidden>!</span>
+            </div>
+            <!-- ゴールの旗 -->
+            <svg class="goal" viewBox="0 0 24 46" aria-hidden="true">
+              <line x1="4" y1="4" x2="4" y2="44" stroke="#5f6b7a" stroke-width="2"/>
+              <path id="goal-flag" d="M5 5 h16 l-4 6 l4 6 h-16 z" fill="#e8b849"/>
+            </svg>
+          </div>
           <div class="count"><span id="insp-count">0 / 0</span><span id="insp-ng" class="ng-count" hidden></span></div>
         </div>
 
@@ -105,6 +145,18 @@
 
     <!-- 設定 -->
     <section id="tab-settings" class="tab">
+      <!-- ロック中（担当者のみ解除できる） -->
+      <form id="lock-form" class="lock-box" autocomplete="off">
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor"/></svg>
+        <h2>設定は担当者専用です</h2>
+        <p class="hint">管理者PINを入力してください。</p>
+        <input type="password" id="pin-input" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" aria-label="管理者PIN">
+        <button type="submit" class="primary">ロックを解除</button>
+      </form>
+
+      <!-- 解除後 -->
+      <div id="settings-body" hidden>
+      <div class="admin-bar"><span>管理者モード中（見本写真の登録もできます）</span><button type="button" id="lock-now" class="secondary">ロック</button></div>
       <label>車両リスト（1行に1台）
         <textarea id="vehicles" rows="5"></textarea>
       </label>
@@ -120,11 +172,37 @@
       </div>
       <p class="hint" id="storage-info"></p>
       <hr>
-      <label class="check"><input type="checkbox" id="sample-edit"> 見本写真の登録・変更を許可する（管理者用）</label>
-      <p class="hint">オンにすると、点検項目の「見本」画面から、OK・NGそれぞれの実写を撮影して登録できます。登録していない項目はイラストで表示されます。</p>
+      <h3 class="sub">見本写真</h3>
+      <p class="hint">管理者モード中は、点検項目の「見本」画面から、OK・NGそれぞれの実写を撮影して登録できます。登録していない項目はイラストで表示されます。</p>
+      <h3 class="sub">管理者PINの変更</h3>
+      <div class="row">
+        <input type="password" id="new-pin" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="新しいPIN（4〜8桁）" aria-label="新しいPIN">
+        <button type="button" id="change-pin" class="secondary">変更</button>
+      </div>
       <p class="hint">バージョン <span id="version"></span></p>
+      </div>
     </section>
   </main>
+
+  <!-- 下のメニュー -->
+  <nav class="bottom-nav" aria-label="メニュー">
+    <button data-tab="inspect" class="active">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4.5" width="14" height="17" rx="2"/><path d="M9 3h6v3.5H9z"/><path d="M9 13.5l2.2 2.2L15.5 11"/></svg></span>
+      点検
+    </button>
+    <button data-tab="nippo">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14.5 3v4.5H19"/><path d="M9 12h7M9 15.5h7M9 19h4"/></svg></span>
+      日報
+    </button>
+    <button data-tab="history">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4v4h4"/><path d="M12 7.5V12l3 2"/></svg><span id="nav-pending" class="nav-badge" hidden>0</span></span>
+      履歴
+    </button>
+    <button data-tab="settings">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><svg id="nav-lock" class="nav-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+      設定
+    </button>
+  </nav>
 
   <!-- 見本（OK/NG） -->
   <dialog id="sample">

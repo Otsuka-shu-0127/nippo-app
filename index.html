@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f4e79">
+  <title>日報アプリ</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="title">日報</div>
+    <div class="status">
+      <span id="net" class="pill">確認中</span>
+      <span id="pending" class="pill pending" hidden>未送信 0件</span>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="form" class="active">入力</button>
+    <button data-tab="list">一覧</button>
+    <button data-tab="settings">設定</button>
+  </nav>
+
+  <main>
+    <!-- 入力 -->
+    <section id="tab-form" class="tab active">
+      <form id="report-form" autocomplete="off">
+        <label>日付<input type="date" name="date" required></label>
+        <label>担当者<input type="text" name="staff" placeholder="例：山田 太郎" required></label>
+        <label>現場名<input type="text" name="site" placeholder="例：〇〇ビル改修工事"></label>
+        <div class="row">
+          <label>開始<input type="time" name="start"></label>
+          <label>終了<input type="time" name="end"></label>
+        </div>
+        <label>作業内容<textarea name="work" rows="5" placeholder="今日やった作業を入力" required></textarea></label>
+        <label>備考・連絡事項<textarea name="note" rows="3" placeholder="気づいたこと、明日の予定など"></textarea></label>
+        <button type="submit" class="primary">保存する</button>
+        <p class="hint">保存した日報はまずこのスマホ内に保存され、ネットにつながると自動で送信されます。</p>
+      </form>
+    </section>
+
+    <!-- 一覧 -->
+    <section id="tab-list" class="tab">
+      <button id="sync-now" class="secondary">今すぐ送信</button>
+      <ul id="report-list" class="list"></ul>
+      <p id="empty" class="hint">まだ日報がありません。</p>
+    </section>
+
+    <!-- 設定 -->
+    <section id="tab-settings" class="tab">
+      <label>送信先URL
+        <input type="url" id="endpoint" placeholder="未設定（デモモード）">
+      </label>
+      <p class="hint">未設定のあいだは「デモモード」です。ネットにつながると送信済みの表示になりますが、実際にはどこにも送られません。</p>
+      <button id="save-settings" class="secondary">設定を保存</button>
+      <hr>
+      <button id="export-csv" class="secondary">日報をCSVで書き出す（バックアップ）</button>
+      <p class="hint" id="storage-info"></p>
+      <p class="hint">バージョン <span id="version"></span></p>
+    </section>
+  </main>
+
+  <dialog id="detail">
+    <div id="detail-body"></div>
+    <div class="dialog-actions">
+      <button id="detail-delete" class="danger">削除</button>
+      <button id="detail-close" class="secondary">閉じる</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

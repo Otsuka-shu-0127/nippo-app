@@ -1,6 +1,6 @@
 // アプリ本体をスマホ内に保存して、オフラインでも起動できるようにする
 // アプリを更新したら VERSION を変える（app.js の APP_VERSION も合わせる）
-const VERSION = 'v3.1';
+const VERSION = 'v3.2';
 const CACHE = 'nippo-' + VERSION;
 const FILES = [
   './',
@@ -31,6 +31,10 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
 
   if (req.mode === 'navigate') {
+    // アプリ本体の画面だけを対象にする（ダッシュボードなど別ページはそのままネットから読む）
+    const scopePath = new URL(self.registration.scope).pathname;
+    const path = new URL(req.url).pathname;
+    if (path !== scopePath && path !== scopePath + 'index.html') return;
     // 画面を開くときは、保存済みの本体を使う（オフラインでも開ける）
     event.respondWith(caches.match('./index.html').then((hit) => hit || fetch(req)));
     return;

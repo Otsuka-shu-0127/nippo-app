@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v3.1';
+const APP_VERSION = 'v3.2';
 
 // ---------- スマホ内の保存（IndexedDB） ----------
 // 日報と点検を同じ保存場所に入れ、type で区別する（'nippo' / 'inspection'）
@@ -191,7 +191,7 @@ function releaseUrls(prefix) {
 // ---------- 共通の画面更新 ----------
 function fillVehicleSelects() {
   const vehicles = getVehicles();
-  const last = getSetting('vehicle');
+  const last = getSetting('vehicle') || LOGIN_VEHICLE;
   $$('.vehicle-select').forEach((sel) => {
     const current = sel.value || last;
     sel.innerHTML = '<option value="">選択してください</option>' +
@@ -209,23 +209,16 @@ function setCurrentVehicle(v) {
   updateInspStatus();
 }
 
+// デモ：ログイン中の車両（本番はログインしたアカウントに紐づく車両を表示する）
+const LOGIN_VEHICLE = DEFAULT_VEHICLES[0];
+const LOGIN_NUMBER = '12-34';
+
 function updateVehiclePill() {
-  const v = getSetting('vehicle');
-  const ok = v && getVehicles().includes(v);
-  $('#vehicle-name').textContent = ok ? v : '車両未選択';
-  $('#vehicle-pill').classList.toggle('none', !ok);
+  $('#vehicle-name').textContent = LOGIN_NUMBER;
+  $('#vehicle-pill').setAttribute('aria-label', 'ログイン中の車両 ' + LOGIN_NUMBER);
 }
 
 $$('.vehicle-select').forEach((sel) => sel.addEventListener('change', () => setCurrentVehicle(sel.value)));
-
-$('#vehicle-pill').addEventListener('click', () => {
-  const current = $('.tab.active').id;
-  if (current !== 'tab-inspect' && current !== 'tab-nippo') showTab('inspect');
-  const sel = $('.tab.active .vehicle-select');
-  window.scrollTo({ top: 0 });
-  sel.focus();
-  if (sel.showPicker) { try { sel.showPicker(); } catch { /* 対応していない場合は無視 */ } }
-});
 
 async function refreshPending() {
   const records = await getAllRecords();
@@ -237,8 +230,8 @@ async function refreshPending() {
 
 function updateNetStatus() {
   const el = $('#net');
-  el.textContent = navigator.onLine ? 'オンライン' : 'オフライン';
-  el.className = 'pill ' + (navigator.onLine ? 'online' : 'offline');
+  $('#net-text').textContent = navigator.onLine ? 'オンライン' : 'オフライン';
+  el.className = 'pill net ' + (navigator.onLine ? 'online' : 'offline');
 }
 
 async function refreshAll() {

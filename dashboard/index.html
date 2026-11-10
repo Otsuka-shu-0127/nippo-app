@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#002777">
+<title>運行管理ダッシュボード</title>
+<style>
+/* ギオン様のコーポレートカラー（Webサイト・ロゴより） */
+:root {
+  color-scheme: light;
+  --navy: #002777; --brand: #0068b6; --cyan: #00b3ec; --gold: #e8b849;
+  --page: #f4f6f9; --card: #ffffff; --card-2: #f1f4f8;
+  --ink: #1c2430; --ink-2: #4b5563; --muted: #6b7480;
+  --line: #dde3ea; --grid: #e9edf2; --axis: #c3cad3;
+  --series: #0068b6; --series-dim: #cdd6e0;
+  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --good-tint: #e3f3e3; --good-ink: #006300; --rest: #eef1f4;
+  --tip-bg: #1c2430; --tip-ink: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d1424; --card: #151f33; --card-2: #1c2840;
+    --ink: #eef2f7; --ink-2: #c3cad6; --muted: #8e98a8;
+    --line: #26334d; --grid: #212e47; --axis: #3a4a68;
+    --series: #3393db; --series-dim: #33415c;
+    --good-tint: #163521; --good-ink: #5fd35f; --rest: #1a2539;
+    --tip-bg: #eef2f7; --tip-ink: #151f33;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d1424; --card: #151f33; --card-2: #1c2840;
+  --ink: #eef2f7; --ink-2: #c3cad6; --muted: #8e98a8;
+  --line: #26334d; --grid: #212e47; --axis: #3a4a68;
+  --series: #3393db; --series-dim: #33415c;
+  --good-tint: #163521; --good-ink: #5fd35f; --rest: #1a2539;
+  --tip-bg: #eef2f7; --tip-ink: #151f33;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--page); color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; }
+body { -webkit-text-size-adjust: 100%; }
+
+.top { background: var(--navy); color: #fff; border-bottom: 3px solid var(--cyan); }
+.top-in { max-width: 1240px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.title small { display: block; font-size: 12px; opacity: .85; }
+.title h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+.top-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.chip { background: rgba(255,255,255,.14); border-radius: 99px; padding: 4px 10px; white-space: nowrap; }
+.chip.gold { background: var(--gold); color: #1c2430; font-weight: 700; }
+
+main { max-width: 1240px; margin: 0 auto; padding: 16px 16px 48px; }
+.notice { font-size: 13px; color: var(--ink-2); background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; line-height: 1.6; }
+
+.filters { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.filters .lbl { font-size: 13px; color: var(--muted); font-weight: 600; margin-right: 6px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+.seg button { border: 0; background: transparent; padding: 7px 14px; border-radius: 8px; font: inherit; font-size: 14px; color: var(--ink-2); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--navy); color: #fff; font-weight: 700; }
+.seg button:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+select { font: inherit; font-size: 14px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.kpi .label { font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.kpi .value { font-size: 28px; font-weight: 800; margin-top: 6px; line-height: 1.15; }
+.kpi .value small { font-size: 14px; font-weight: 600; margin-left: 3px; color: var(--ink-2); }
+.kpi .sub { font-size: 12.5px; color: var(--muted); margin-top: 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.up { color: var(--good-ink); font-weight: 700; }
+.down { color: var(--critical); font-weight: 700; }
+
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.s12 { grid-column: span 12; } .s8 { grid-column: span 8; } .s7 { grid-column: span 7; } .s5 { grid-column: span 5; } .s4 { grid-column: span 4; }
+@media (max-width: 960px) { .grid > .card { grid-column: span 12; } }
+.card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.card h2 { font-size: 16px; margin: 0; }
+.card .desc { font-size: 12.5px; color: var(--muted); margin: 3px 0 0; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { font-size: 12px; color: var(--muted); font-weight: 600; text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
+.num { text-align: right; }
+.veh b { display: block; } .veh span { font-size: 12px; color: var(--muted); }
+.wrap { white-space: normal; min-width: 180px; }
+
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink); padding: 3px 10px 3px 4px; border-radius: 99px; background: var(--card-2); white-space: nowrap; }
+.badge i { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 800; color: #fff; flex: none; }
+.badge.good i { background: var(--good); } .badge.critical i { background: var(--critical); }
+.badge.warning i { background: var(--warning); color: #0b0b0b; } .badge.serious i { background: var(--serious); }
+.badge.info i { background: var(--brand); } .badge.idle i { background: var(--muted); }
+
+/* 縦棒グラフ（SVG） */
+.chart { width: 100%; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.chart .gridline { stroke: var(--grid); stroke-width: 1; }
+.chart .baseline { stroke: var(--axis); stroke-width: 1; }
+.chart .bar { fill: var(--series); }
+.chart .bar.partial { fill: var(--series-dim); }
+.chart .hit { fill: transparent; cursor: default; }
+.chart .hit:hover + .bar, .chart .hit:hover ~ .hl { opacity: .85; }
+.chart .peak { fill: var(--ink); font-weight: 700; font-size: 11px; }
+
+/* 横棒グラフ（HTML） */
+.hbars { display: grid; gap: 10px; }
+.hrow { display: grid; grid-template-columns: minmax(84px, 128px) 1fr 76px; align-items: center; gap: 10px; font-size: 13px; }
+.hrow .name { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hrow .track { height: 14px; position: relative; }
+.hrow .fill { height: 100%; background: var(--series); border-radius: 0 4px 4px 0; min-width: 2px; }
+.hrow.dim .fill { background: var(--series-dim); }
+.hrow .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.hrow:hover .fill { opacity: .85; }
+
+/* 点検カレンダー */
+.cal { display: grid; gap: 4px; align-items: center; min-width: 0; }
+.cal .h { font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.2; }
+.cal .h.sun { color: var(--critical); }
+.cal .h.today { color: var(--ink); font-weight: 800; }
+.cal .vn { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.cell { aspect-ratio: 1; max-height: 30px; border-radius: 5px; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+.cell.ok { background: var(--good-tint); color: var(--good-ink); }
+.cell.ng { background: var(--critical); color: #fff; }
+.cell.none { background: var(--warning); color: #0b0b0b; }
+.cell.rest { background: var(--rest); color: var(--muted); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); margin-top: 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .cell { width: 18px; height: 18px; font-size: 10px; }
+
+details.tv { margin-top: 10px; }
+details.tv summary { font-size: 13px; color: var(--brand); cursor: pointer; width: max-content; }
+:root[data-theme="dark"] details.tv summary { color: var(--series); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) details.tv summary { color: var(--series); } }
+details.tv table { margin-top: 8px; font-size: 13px; }
+details.tv td, details.tv th { padding: 6px 10px; }
+
+.tip { position: fixed; z-index: 50; pointer-events: none; background: var(--tip-bg); color: var(--tip-ink); font-size: 12.5px; line-height: 1.5; padding: 7px 10px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.18); max-width: 260px; opacity: 0; transition: opacity .1s; }
+.tip.on { opacity: 1; }
+.tip b { font-weight: 700; }
+.empty { font-size: 13px; color: var(--muted); padding: 12px 0; }
+footer { max-width: 1240px; margin: 0 auto; padding: 0 16px 32px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="title"><small>デモ版</small><h1>運行管理ダッシュボード</h1></div>
+    <div class="top-meta">
+      <span class="chip gold">サンプルデータ</span>
+      <span class="chip" id="asof">更新 --:--</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <p class="notice">表示しているのは<b>架空のサンプルデータ</b>です。実際の運用では、各ドライバーのスマホ（運行日報アプリ）から送られた日報・点検の記録がここに集まります。圏外で送れなかった記録も、電波が戻ると自動で反映されます。</p>
+
+  <div class="filters" role="group" aria-label="表示の絞り込み">
+    <div><span class="lbl">期間</span>
+      <div class="seg" id="period">
+        <button type="button" data-p="7" aria-pressed="false">直近7日</button>
+        <button type="button" data-p="30" aria-pressed="true">直近30日</button>
+        <button type="button" data-p="month" aria-pressed="false">今月</button>
+      </div>
+    </div>
+    <label><span class="lbl">車両</span><select id="vehicle"></select></label>
+  </div>
+
+  <section class="kpis" id="kpis" aria-label="主な数字"></section>
+
+  <div class="grid">
+    <section class="card s12">
+      <div class="card-head">
+        <div><h2>本日の運行状況</h2><p class="desc" id="today-desc"></p></div>
+      </div>
+      <div class="table-wrap"><table id="today-table"></table></div>
+    </section>
+
+    <section class="card s8">
+      <div class="card-head"><div><h2>日別の走行距離</h2><p class="desc" id="daily-desc"></p></div></div>
+      <div class="chart" id="daily-chart"></div>
+      <details class="tv"><summary>表で見る</summary><div class="table-wrap"><table id="daily-table"></table></div></details>
+    </section>
+
+    <section class="card s4">
+      <div class="card-head"><div><h2>車両別の走行距離</h2><p class="desc" id="veh-desc"></p></div></div>
+      <div class="hbars" id="veh-bars"></div>
+      <details class="tv"><summary>表で見る</summary><div class="table-wrap"><table id="veh-table"></table></div></details>
+    </section>
+
+    <section class="card s12">
+      <div class="card-head"><div><h2>運行前点検の実施状況（直近14日）</h2><p class="desc">点検をしないまま出庫した日や、NGが出た日がひと目で分かります。</p></div></div>
+      <div class="cal" id="cal"></div>
+      <div class="legend">
+        <span><span class="cell ok">✓</span>点検OK</span>
+        <span><span class="cell ng">!</span>NGあり</span>
+        <span><span class="cell none">−</span>未実施のまま出庫</span>
+        <span><span class="cell rest">休</span>運休</span>
+      </div>
+    </section>
+
+    <section class="card s5">
+      <div class="card-head"><div><h2>NGが多い点検項目</h2><p class="desc" id="ngrank-desc"></p></div></div>
+      <div class="hbars" id="ng-bars"></div>
+      <details class="tv"><summary>表で見る</summary><div class="table-wrap"><table id="ng-table"></table></div></details>
+    </section>
+
+    <section class="card s7">
+      <div class="card-head"><div><h2>NGの記録と対応状況</h2><p class="desc">未対応のものを上に表示しています。</p></div></div>
+      <div class="table-wrap"><table id="nglist"></table></div>
+    </section>
+  </div>
+</main>
+<footer>運行日報アプリ デモ版 ／ 車両・乗務員・数値はすべて架空です。</footer>
+
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script src="../checklist.js"></script>
+<script>
+'use strict';
+// ====================================================================
+// サンプルデータを作る（毎回同じ内容になるよう、乱数の種を固定）
+// ====================================================================
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rnd = mulberry32(20261111);
+const pick = (weighted) => {
+  const total = weighted.reduce((s, [, w]) => s + w, 0);
+  let r = rnd() * total;
+  for (const [v, w] of weighted) { if ((r -= w) < 0) return v; }
+  return weighted[0][0];
+};
+
+const VEHICLES = [
+  { id: 'v1', name: '1号車', plate: '相模100あ12-34', driver: '佐藤 健一', base: 165, eff: 4.3, out: '06:10', in: '13:40' },
+  { id: 'v2', name: '2号車', plate: '相模100い56-78', driver: '鈴木 大輔', base: 210, eff: 3.9, out: '06:40', in: '15:10' },
+  { id: 'v3', name: '3号車', plate: '相模130う90-12', driver: '高橋 誠',   base: 240, eff: 3.6, out: '07:05', in: '16:30' },
+  { id: 'v4', name: '4号車', plate: '相模800え34-56', driver: '田中 浩二', base: 190, eff: 4.0, out: '07:30', in: '17:20' },
+  { id: 'v5', name: '5号車', plate: '相模100お78-90', driver: '伊藤 翔',   base: 150, eff: 4.5, out: '08:00', in: '18:40' },
+  { id: 'v6', name: '6号車', plate: '相模130か11-22', driver: '渡辺 隆',   base: 220, eff: 3.7, out: '07:50', in: '17:00' },
+];
+const VMAP = Object.fromEntries(VEHICLES.map((v) => [v.id, v]));
+
+const ITEM_NAME = {};
+(typeof CHECKLIST !== 'undefined' ? CHECKLIST : []).forEach((c) => c.items.forEach((it) => { ITEM_NAME[it.id] = it.name; }));
+const NG_POOL = [
+  ['tire_tread', 5, ['左後輪の溝が浅い（残り2mm程度）', '右後輪に小さな亀裂']],
+  ['lights', 4, ['右ブレーキランプが点灯しない', '左ウインカーの点滅が速い']],
+  ['washer', 4, ['ウォッシャー液がほぼ空']],
+  ['tire_pressure', 3, ['右前輪のたわみが大きい']],
+  ['wiper', 3, ['運転席側に拭きむらがある']],
+  ['oil', 2, ['オイル量がL付近']],
+  ['wheel_nut', 2, ['左後輪のマーキングがずれている']],
+  ['battery', 1, ['液量がLOWER付近']],
+  ['belt', 1, ['ベルトに細かいひび']],
+  ['leak', 1, ['車体の下に油じみ']],
+  ['warning', 1, ['エンジン警告灯が消えない']],
+];
+const NG_INFO = Object.fromEntries(NG_POOL.map(([id, , c]) => [id, c]));
+
+const pad = (n) => String(n).padStart(2, '0');
+const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const md = (s) => { const [, m, d] = s.split('-'); return `${+m}/${+d}`; };
+const WD = ['日', '月', '火', '水', '木', '金', '土'];
+const toMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+const fromMin = (m) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+
+const NOW = new Date();
+// デモでは「運行中」と「帰庫済」が混ざって見えるよう、表示時刻を 9:30〜17:50 に収める
+const nowMin = Math.min(Math.max(NOW.getHours() * 60 + NOW.getMinutes(), 9 * 60 + 30), 17 * 60 + 50);
+const TODAY = ymd(NOW);
+const DAYS = 75;
+
+const records = []; // 1件 = 1台の1日分
+for (let back = DAYS - 1; back >= 0; back--) {
+  const d = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() - back);
+  const date = ymd(d);
+  const isToday = back === 0;
+  for (const v of VEHICLES) {
+    const r = { date, vid: v.id, dow: d.getDay(), worked: true, insp: 'ok', ngs: [], km: 0, fuel: 0, toll: 0, stops: 0, alc: [0, 0] };
+    // 日曜は運休。平日もたまに運休
+    if (!isToday && (d.getDay() === 0 || rnd() < 0.05)) { r.worked = false; r.insp = null; records.push(r); continue; }
+    r.km = Math.round(v.base * (0.72 + rnd() * 0.56));
+    r.fuel = Math.round((r.km / (v.eff * (0.92 + rnd() * 0.16))) * 10) / 10;
+    r.toll = rnd() < 0.55 ? Math.round((800 + rnd() * 4200) / 10) * 10 : 0;
+    r.stops = 2 + Math.floor(rnd() * 5);
+    r.out = fromMin(toMin(v.out) + Math.floor(rnd() * 20) - 10);
+    r.in = fromMin(toMin(v.in) + Math.floor(rnd() * 40) - 20);
+    if (rnd() < 0.025) r.insp = 'none';
+    else if (rnd() < 0.11) {
+      const id = pick(NG_POOL.map(([i, w]) => [i, w]));
+      const opts = NG_INFO[id];
+      r.insp = 'ng';
+      r.ngs.push({ id, comment: opts[Math.floor(rnd() * opts.length)], resolved: back > 2 || rnd() < 0.4, photo: rnd() < 0.85 });
+    }
+    records.push(r);
+  }
+}
+// 本日分は話がわかりやすいように固定（5号車がNG、6号車が点検未実施のまま出庫）
+for (const r of records.filter((x) => x.date === TODAY)) {
+  const v = VMAP[r.vid];
+  r.out = v.out; r.in = v.in;
+  r.insp = 'ok'; r.ngs = [];
+  if (r.vid === 'v5') { r.insp = 'ng'; r.ngs = [{ id: 'tire_tread', comment: '左後輪の溝が浅い（残り2mm程度）', resolved: false, photo: true }]; }
+  if (r.vid === 'v6') r.insp = 'none';
+  const back = toMin(r.in) <= nowMin;
+  r.state = toMin(r.out) > nowMin ? 'before' : back ? 'back' : 'running';
+  if (!back) { r.km = 0; r.fuel = 0; r.toll = 0; } // 帰庫前は未確定
+  // 4号車は途中から圏外（最終受信が古い）
+  r.lastSync = r.vid === 'v4' ? Math.min(toMin(r.out) + 25, nowMin) : back ? toMin(r.in) + 2 : nowMin - (3 + Math.floor(rnd() * 12));
+}
+
+// ====================================================================
+// 画面の状態
+// ====================================================================
+const state = { period: '30', vehicle: 'all' };
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (n, d = 0) => Number(n).toLocaleString('ja-JP', { maximumFractionDigits: d, minimumFractionDigits: d });
+const vLabel = (v) => `${v.name}`;
+
+function periodDates() {
+  const list = [];
+  const n = state.period === 'month' ? NOW.getDate() : Number(state.period);
+  for (let i = n - 1; i >= 0; i--) list.push(ymd(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() - i)));
+  return list;
+}
+function prevDates(len) {
+  const list = [];
+  for (let i = len * 2 - 1; i >= len; i--) list.push(ymd(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() - i)));
+  return list;
+}
+const inVehicle = (r) => state.vehicle === 'all' || r.vid === state.vehicle;
+const ofDates = (dates) => { const set = new Set(dates); return records.filter((r) => set.has(r.date) && inVehicle(r)); };
+const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
+
+const badge = (kind, icon, text) => `<span class="badge ${kind}"><i aria-hidden="true">${icon}</i>${esc(text)}</span>`;
+
+// ====================================================================
+// 描画
+// ====================================================================
+function renderKpis() {
+  const dates = periodDates();
+  const rows = ofDates(dates).filter((r) => r.worked);
+  const prev = ofDates(prevDates(dates.length)).filter((r) => r.worked);
+  const today = records.filter((r) => r.date === TODAY && inVehicle(r));
+
+  const inspDone = rows.filter((r) => r.insp === 'ok' || r.insp === 'ng').length;
+  const rate = rows.length ? (inspDone / rows.length) * 100 : 0;
+  const todayDone = today.filter((r) => r.insp !== 'none').length;
+  const ngAll = rows.flatMap((r) => r.ngs);
+  const open = ngAll.filter((n) => !n.resolved).length;
+  const km = sum(rows, (r) => r.km), kmPrev = sum(prev, (r) => r.km);
+  const delta = kmPrev ? ((km - kmPrev) / kmPrev) * 100 : 0;
+  const fuel = sum(rows, (r) => r.fuel);
+  const toll = sum(rows, (r) => r.toll);
+  const alcHits = rows.filter((r) => r.alc.some((x) => x > 0)).length;
+
+  const tiles = [
+    { label: '本日の運行前点検', value: `${todayDone}<small>/ ${today.length}台</small>`,
+      sub: todayDone === today.length ? badge('good', '✓', '全車実施済み') : badge('warning', '!', `未実施 ${today.length - todayDone}台`) },
+    { label: '点検の実施率（期間）', value: `${fmt(rate, 1)}<small>%</small>`, sub: `${fmt(inspDone)} / ${fmt(rows.length)} 運行` },
+    { label: '未対応のNG', value: `${open}<small>件</small>`,
+      sub: open ? badge('critical', '!', '対応が必要です') : badge('good', '✓', 'すべて対応済み') },
+    { label: '総走行距離（期間）', value: `${fmt(km)}<small>km</small>`,
+      sub: `前の期間より <span class="${delta >= 0 ? 'up' : 'down'}">${delta >= 0 ? '+' : ''}${fmt(delta, 1)}%</span>` },
+    { label: '平均燃費（期間）', value: `${fmt(fuel ? km / fuel : 0, 2)}<small>km/L</small>`, sub: `給油 ${fmt(fuel)} L ／ 高速代 ¥${fmt(toll)}` },
+    { label: 'アルコール検知（期間）', value: `${alcHits}<small>件</small>`,
+      sub: alcHits ? badge('critical', '!', '要確認') : badge('good', '✓', '出庫前・帰庫後とも 0.00') },
+  ];
+  $('#kpis').innerHTML = tiles.map((t) => `<div class="kpi"><div class="label">${t.label}</div><div class="value">${t.value}</div><div class="sub">${t.sub}</div></div>`).join('');
+}
+
+function renderToday() {
+  const rows = records.filter((r) => r.date === TODAY && inVehicle(r));
+  $('#today-desc').textContent = `${md(TODAY)}（${WD[NOW.getDay()]}） ${fromMin(nowMin)} 時点`;
+  const head = '<thead><tr><th>車両</th><th>乗務員</th><th>運行前点検</th><th>状況</th><th>出庫</th><th>帰庫</th><th class="num">走行距離</th><th>アルコール</th><th>スマホからの最終受信</th></tr></thead>';
+  const body = rows.map((r) => {
+    const v = VMAP[r.vid];
+    const insp = r.insp === 'ok' ? badge('good', '✓', 'OK')
+      : r.insp === 'ng' ? badge('critical', '!', `NG ${r.ngs.length}件`)
+      : badge('warning', '−', '未実施');
+    const st = r.state === 'before' ? badge('idle', '・', '出庫前') : r.state === 'running' ? badge('info', '▶', '運行中') : badge('good', '✓', '帰庫済');
+    const out = r.state === 'before' ? '—' : r.out;
+    const inn = r.state === 'back' ? r.in : '—';
+    const km = r.state === 'back' ? `${fmt(r.km)} km` : '—';
+    const alc = r.state === 'before' ? '—' : r.state === 'back' ? '0.00 ／ 0.00' : '0.00 ／ —';
+    const ago = nowMin - r.lastSync;
+    const sync = r.state === 'before' ? '—'
+      : ago > 60 ? badge('serious', '!', `${fromMin(r.lastSync)}（圏外の可能性）`)
+      : `${ago <= 0 ? 'たった今' : ago < 60 ? `${ago}分前` : `${Math.floor(ago / 60)}時間${ago % 60}分前`}`;
+    return `<tr><td class="veh"><b>${esc(v.name)}</b><span>${esc(v.plate)}</span></td><td>${esc(v.driver)}</td><td>${insp}</td><td>${st}</td><td>${out}</td><td>${inn}</td><td class="num">${km}</td><td>${alc}</td><td>${sync}</td></tr>`;
+  }).join('');
+  $('#today-table').innerHTML = head + `<tbody>${body}</tbody>`;
+}
+
+function niceStep(max, n = 4) {
+  const raw = max / n;
+  const p = 10 ** Math.floor(Math.log10(raw || 1));
+  const f = raw / p;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+}
+function roundTop(x, y, w, h, r) {
+  r = Math.min(r, w / 2, h);
+  const b = y + h;
+  return `M${x},${b}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${b}Z`;
+}
+
+function renderDaily() {
+  const dates = periodDates();
+  const data = dates.map((date) => {
+    const rs = records.filter((r) => r.date === date && inVehicle(r));
+    const worked = rs.filter((r) => r.worked);
+    return { date, km: sum(rs, (r) => r.km), n: worked.filter((r) => r.km > 0).length, partial: date === TODAY, rest: worked.length === 0 };
+  });
+  const el = $('#daily-chart');
+  const W = Math.max(280, el.clientWidth);
+  const H = 250, m = { l: 52, r: 8, t: 18, b: 28 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const step = niceStep(Math.max(...data.map((d) => d.km), 1));
+  const max = Math.ceil(Math.max(...data.map((d) => d.km), 1) / step) * step;
+  const y = (v) => m.t + ph - (v / max) * ph;
+  const bw = pw / data.length;
+  const barW = Math.max(2, Math.min(26, bw - 2));
+  let s = '';
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    s += `<line class="${v === 0 ? 'baseline' : 'gridline'}" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/>`;
+    s += `<text x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`;
+  }
+  const every = Math.max(1, Math.ceil(data.length / Math.max(1, Math.floor(pw / 52))));
+  const peak = data.reduce((a, b) => (b.km > a.km ? b : a), data[0]);
+  data.forEach((d, i) => {
+    const x0 = m.l + i * bw;
+    const bx = x0 + (bw - barW) / 2;
+    const h = (d.km / max) * ph;
+    const dow = WD[new Date(d.date + 'T00:00').getDay()];
+    const tip = d.rest ? `<b>${md(d.date)}（${dow}）</b><br>運休` :
+      `<b>${md(d.date)}（${dow}）${d.partial ? '・本日' : ''}</b><br>走行距離 ${fmt(d.km)} km<br>${d.partial ? `帰庫済 ${d.n}台分（集計中）` : `${d.n}台が運行`}`;
+    s += `<rect class="hit" x="${x0}" y="${m.t}" width="${bw}" height="${ph}" data-tip="${esc(tip)}"/>`;
+    if (h > 0) s += `<path class="bar${d.partial ? ' partial' : ''}" d="${roundTop(bx, y(d.km), barW, h, 4)}" pointer-events="none"/>`;
+    if ((data.length - 1 - i) % every === 0) s += `<text x="${x0 + bw / 2}" y="${H - 8}" text-anchor="middle">${md(d.date)}</text>`;
+    if (d === peak && d.km > 0) s += `<text class="peak" x="${x0 + bw / 2}" y="${y(d.km) - 6}" text-anchor="middle">${fmt(d.km)}</text>`;
+  });
+  s += `<text x="${m.l - 8}" y="${m.t - 8}" text-anchor="end">km</text>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="日別の走行距離の棒グラフ">${s}</svg>`;
+
+  const total = sum(data, (d) => d.km);
+  const workDays = data.filter((d) => !d.rest && !d.partial).length;
+  $('#daily-desc').textContent = `${state.vehicle === 'all' ? '全車両' : vLabel(VMAP[state.vehicle])}の合計。1日平均 ${fmt(workDays ? (total - (data.at(-1).partial ? data.at(-1).km : 0)) / workDays : 0)} km（運行日のみ）。本日分は帰庫した車両だけ（薄い色）。`;
+  $('#daily-table').innerHTML = '<thead><tr><th>日付</th><th class="num">走行距離</th><th class="num">運行台数</th></tr></thead><tbody>' +
+    data.slice().reverse().map((d) => `<tr><td>${md(d.date)}（${WD[new Date(d.date + 'T00:00').getDay()]}）</td><td class="num">${d.rest ? '運休' : fmt(d.km) + ' km'}</td><td class="num">${d.n}台</td></tr>`).join('') + '</tbody>';
+}
+
+function hbars(el, rows, unit) {
+  const max = Math.max(...rows.map((r) => r.value), 1);
+  el.innerHTML = rows.length ? rows.map((r) =>
+    `<div class="hrow${r.dim ? ' dim' : ''}" data-tip="${esc(r.tip)}"><span class="name">${esc(r.label)}</span><span class="track"><span class="fill" style="display:block;width:${(r.value / max) * 100}%"></span></span><span class="val">${fmt(r.value)} ${unit}</span></div>`
+  ).join('') : '<p class="empty">この期間のデータはありません。</p>';
+}
+
+function renderVehicles() {
+  const set = new Set(periodDates());
+  const rows = VEHICLES.map((v) => {
+    const rs = records.filter((r) => set.has(r.date) && r.vid === v.id && r.worked);
+    const km = sum(rs, (r) => r.km), fuel = sum(rs, (r) => r.fuel);
+    return { v, km, fuel, days: rs.length };
+  }).sort((a, b) => b.km - a.km);
+  hbars($('#veh-bars'), rows.map((r) => ({
+    label: `${r.v.name}（${r.v.driver.split(' ')[0]}）`, value: r.km,
+    dim: state.vehicle !== 'all' && state.vehicle !== r.v.id,
+    tip: `<b>${esc(r.v.name)} ${esc(r.v.plate)}</b><br>乗務員 ${esc(r.v.driver)}<br>走行 ${fmt(r.km)} km ／ ${r.days}日運行<br>燃費 ${fmt(r.fuel ? r.km / r.fuel : 0, 2)} km/L`,
+  })), 'km');
+  $('#veh-desc').textContent = '選んだ期間の合計。多い順。';
+  $('#veh-table').innerHTML = '<thead><tr><th>車両</th><th class="num">走行距離</th><th class="num">運行日数</th><th class="num">燃費</th></tr></thead><tbody>' +
+    rows.map((r) => `<tr><td>${esc(r.v.name)}</td><td class="num">${fmt(r.km)} km</td><td class="num">${r.days}日</td><td class="num">${fmt(r.fuel ? r.km / r.fuel : 0, 2)} km/L</td></tr>`).join('') + '</tbody>';
+}
+
+function renderCalendar() {
+  const dates = [];
+  for (let i = 13; i >= 0; i--) dates.push(ymd(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() - i)));
+  const el = $('#cal');
+  el.style.gridTemplateColumns = `minmax(52px, 72px) repeat(${dates.length}, minmax(16px, 1fr))`;
+  let s = '<span></span>' + dates.map((d) => {
+    const dow = new Date(d + 'T00:00').getDay();
+    return `<span class="h${dow === 0 ? ' sun' : ''}${d === TODAY ? ' today' : ''}">${md(d)}<br>${d === TODAY ? '今日' : WD[dow]}</span>`;
+  }).join('');
+  for (const v of VEHICLES.filter((x) => state.vehicle === 'all' || x.id === state.vehicle)) {
+    s += `<span class="vn">${esc(v.name)}</span>`;
+    for (const d of dates) {
+      const r = records.find((x) => x.date === d && x.vid === v.id);
+      const dl = `${esc(v.name)}　${md(d)}（${WD[new Date(d + 'T00:00').getDay()]}）`;
+      if (!r || !r.worked) { s += `<span class="cell rest" data-tip="<b>${dl}</b><br>運休">休</span>`; continue; }
+      if (r.insp === 'ok') s += `<span class="cell ok" data-tip="<b>${dl}</b><br>点検OK（18項目）">✓</span>`;
+      else if (r.insp === 'ng') s += `<span class="cell ng" data-tip="<b>${dl}</b><br>NG：${esc(r.ngs.map((n) => ITEM_NAME[n.id] || n.id).join('、'))}">!</span>`;
+      else s += `<span class="cell none" data-tip="<b>${dl}</b><br>点検の記録がないまま出庫">−</span>`;
+    }
+  }
+  el.innerHTML = s;
+}
+
+function renderNg() {
+  const set = new Set(periodDates());
+  const rows = records.filter((r) => set.has(r.date) && inVehicle(r) && r.ngs.length);
+  const count = {};
+  rows.forEach((r) => r.ngs.forEach((n) => { count[n.id] = (count[n.id] || 0) + 1; }));
+  const ranked = Object.entries(count).sort((a, b) => b[1] - a[1]);
+  const top = ranked.slice(0, 6);
+  const rest = ranked.slice(6).reduce((s, [, c]) => s + c, 0);
+  const bars = top.map(([id, c]) => ({ label: ITEM_NAME[id] || id, value: c, tip: `<b>${esc(ITEM_NAME[id] || id)}</b><br>NG ${c}件` }));
+  if (rest) bars.push({ label: 'その他', value: rest, tip: `<b>その他の項目</b><br>NG ${rest}件` });
+  hbars($('#ng-bars'), bars, '件');
+  const total = sum(ranked, ([, c]) => c);
+  $('#ngrank-desc').textContent = `選んだ期間のNG ${total}件の内訳。多い項目は重点的に点検・整備を。`;
+  $('#ng-table').innerHTML = '<thead><tr><th>点検項目</th><th class="num">NG件数</th></tr></thead><tbody>' +
+    ranked.map(([id, c]) => `<tr><td>${esc(ITEM_NAME[id] || id)}</td><td class="num">${c}件</td></tr>`).join('') + '</tbody>';
+
+  const list = rows.flatMap((r) => r.ngs.map((n) => ({ ...n, date: r.date, vid: r.vid })))
+    .sort((a, b) => (a.resolved - b.resolved) || b.date.localeCompare(a.date)).slice(0, 8);
+  $('#nglist').innerHTML = list.length ? '<thead><tr><th>日付</th><th>車両</th><th>点検項目</th><th>ドライバーのメモ</th><th>写真</th><th>状態</th></tr></thead><tbody>' +
+    list.map((n) => `<tr><td>${md(n.date)}</td><td>${esc(VMAP[n.vid].name)}</td><td>${esc(ITEM_NAME[n.id] || n.id)}</td><td class="wrap">${esc(n.comment)}</td><td>${n.photo ? '📷 1枚' : '—'}</td><td>${n.resolved ? badge('good', '✓', '対応済') : badge('critical', '!', '未対応')}</td></tr>`).join('') + '</tbody>'
+    : '<tbody><tr><td class="empty">この期間のNGはありません。</td></tr></tbody>';
+}
+
+function renderAll() {
+  $('#asof').textContent = `更新 ${fromMin(nowMin)}`;
+  renderKpis(); renderToday(); renderDaily(); renderVehicles(); renderCalendar(); renderNg();
+}
+
+// ---------- 絞り込み ----------
+$('#vehicle').innerHTML = '<option value="all">全車両</option>' + VEHICLES.map((v) => `<option value="${v.id}">${esc(v.name)} ${esc(v.plate)}</option>`).join('');
+$('#vehicle').addEventListener('change', (e) => { state.vehicle = e.target.value; renderAll(); });
+$('#period').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.period = b.dataset.p;
+  document.querySelectorAll('#period button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  renderAll();
+});
+
+// ---------- ツールチップ ----------
+const tip = $('#tip');
+document.addEventListener('pointermove', (e) => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (!t) { tip.classList.remove('on'); return; }
+  tip.innerHTML = t.getAttribute('data-tip');
+  tip.classList.add('on');
+  const r = tip.getBoundingClientRect();
+  let x = e.clientX + 14, y = e.clientY + 14;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14;
+  tip.style.left = `${Math.max(8, x)}px`; tip.style.top = `${Math.max(8, y)}px`;
+});
+document.addEventListener('pointerleave', () => tip.classList.remove('on'));
+addEventListener('scroll', () => tip.classList.remove('on'), { passive: true });
+
+let rz;
+new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(renderDaily, 80); }).observe($('#daily-chart'));
+renderAll();
+</script>
+</body>
+</html>

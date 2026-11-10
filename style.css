@@ -67,8 +67,12 @@ html, body {
   font-size: 13px; font-weight: 700; padding: 4px 10px;
   background: #fff; color: var(--navy);
 }
-.pill.vehicle.none { background: rgba(255,255,255,.18); color: #fff; font-weight: 400; }
 .pill.vehicle svg { flex: none; }
+#vehicle-name { font-size: 15px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.pill.net { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+.pill.net svg { flex: none; }
+.pill.net .ic-off, .pill.net.offline .ic-on { display: none; }
+.pill.net.offline .ic-off { display: block; }
 
 /* 下のメニュー（アイコン付き） */
 .bottom-nav {
@@ -203,7 +207,8 @@ select { appearance: none; -webkit-appearance: none; background-image: linear-gr
 .item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .item-name { font-weight: 700; font-size: 17px; }
 .item-point { color: var(--muted); font-size: 14px; margin-top: 2px; line-height: 1.5; }
-.sample-btn { flex: none; border: 1px solid var(--brand); color: var(--brand); background: var(--card); border-radius: 8px; padding: 8px 12px; font-size: 14px; font-weight: 700; }
+.sample-btn { flex: none; border: 0; color: var(--brand); background: transparent; border-radius: 8px; padding: 8px 6px 8px 12px; font-size: 14px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.sample-btn:active { background: #e8f1fa; }
 .judge { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .judge-btn { padding: 14px 0; border-radius: 10px; font-size: 18px; font-weight: 800; background: var(--card); }
 .judge-btn.ok { color: var(--ok); border: 2px solid var(--ok); }

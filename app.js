@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v3.3';
+const APP_VERSION = 'v3.4';
 
 // ---------- スマホ内の保存（IndexedDB） ----------
 // 日報と点検を同じ保存場所に入れ、type で区別する（'nippo' / 'inspection'）
@@ -108,6 +108,13 @@ function getVehicles() {
   return v.length ? v : DEFAULT_VEHICLES;
 }
 
+// デモ用のルート（コース）。管理画面のダッシュボードと同じ名前。設定画面で変更できます。
+const DEFAULT_ROUTES = ['A 町田・八王子方面', 'B 横浜方面', 'C 県央方面', 'D 湘南方面', 'E 横持ち（工場→センター）'];
+function getRoutes() {
+  const v = getSetting('routes').split('\n').map((s) => s.trim()).filter(Boolean);
+  return v.length ? v : DEFAULT_ROUTES;
+}
+
 // ---------- 便利関数 ----------
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -199,6 +206,19 @@ function fillVehicleSelects() {
     if (vehicles.includes(current)) sel.value = current;
   });
   updateVehiclePill();
+}
+
+// 日報のルート欄（1便目は前回と同じルートを最初から選んでおく）
+function fillRouteSelects(reset = false) {
+  const routes = getRoutes();
+  const opts = routes.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  const r1 = $('#route1'), r2 = $('#route2');
+  const cur1 = reset ? '' : r1.value, cur2 = reset ? '' : r2.value;
+  r1.innerHTML = '<option value="">選択してください</option>' + opts;
+  r2.innerHTML = '<option value="">なし</option>' + opts;
+  const want1 = cur1 || getSetting('route1') || routes[0];
+  if (routes.includes(want1)) r1.value = want1;
+  if (routes.includes(cur2)) r2.value = cur2;
 }
 
 // 選択中の車両：点検・日報の両方とヘッダーに反映
@@ -541,6 +561,7 @@ function resetNippoForm() {
   nippoForm.date.value = today();
   nippoForm.driver.value = getSetting('driver') || getSetting('staff');
   fillVehicleSelects();
+  fillRouteSelects(true);
   $('#stops').innerHTML = '';
   addStop({ kind: '積込' });
   updateDistance();
@@ -550,8 +571,8 @@ function resetNippoForm() {
 nippoForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = e.target;
-  if (!f.driver.value.trim() || !f.vehicle.value || !f.date.value) {
-    toast('日付・乗務員・車両を入力してください');
+  if (!f.driver.value.trim() || !f.vehicle.value || !f.date.value || !f.route1.value) {
+    toast('日付・乗務員・車両・ルート（1便目）を入力してください');
     return;
   }
   const num = (v) => (v === '' ? null : Number(v));
@@ -568,6 +589,7 @@ nippoForm.addEventListener('submit', async (e) => {
     date: f.date.value,
     driver: f.driver.value.trim(),
     vehicle: f.vehicle.value,
+    routes: [f.route1.value, f.route2.value].filter(Boolean), // 便ごとのルート（1便目、2便目）
     outTime: f.outTime.value,
     inTime: f.inTime.value,
     outOdo,
@@ -585,6 +607,7 @@ nippoForm.addEventListener('submit', async (e) => {
   await putRecord(record);
   setSetting('driver', record.driver);
   setSetting('vehicle', record.vehicle);
+  setSetting('route1', record.routes[0]);
   requestPersistentStorage();
   resetNippoForm();
   window.scrollTo({ top: 0 });
@@ -614,7 +637,7 @@ async function renderHistory() {
     }
     const who = r.driver || r.staff || '';
     const summary = r.type === 'nippo' && r.stops
-      ? [r.vehicle, r.distance != null ? `${r.distance}km` : '', r.stops.length ? `運行記録${r.stops.length}件` : ''].filter(Boolean).join('　')
+      ? [r.vehicle, r.routes && r.routes.length ? r.routes.join(' → ') : '', r.distance != null ? `${r.distance}km` : '', r.stops.length ? `運行記録${r.stops.length}件` : ''].filter(Boolean).join('　')
       : (r.work || '');
     return `<li data-id="${esc(r.id)}">
       <div class="head"><span class="kind nippo">日報</span><span class="date">${esc(r.date)}</span>${syncBadge(r)}</div>
@@ -650,6 +673,7 @@ $('#history-list').addEventListener('click', async (e) => {
     const stops = r.stops.map((s) => `<li><strong>${esc(s.time || '--:--')} ${esc(s.kind)}</strong> ${esc(s.place)}${s.detail ? `<br><span class="hint">${esc(s.detail)}</span>` : ''}</li>`).join('');
     html = `<h3>運転日報</h3><dl>
       ${row('日付', r.date)}${row('乗務員', r.driver)}${row('車両', r.vehicle)}
+      ${row('ルート', (r.routes || []).map((x, i) => `${i + 1}便目 ${x}`).join('　'))}
       ${row('出庫', [r.outTime, r.outOdo != null ? `${r.outOdo}km` : ''].filter(Boolean).join('　'))}
       ${row('帰庫', [r.inTime, r.inOdo != null ? `${r.inOdo}km` : ''].filter(Boolean).join('　'))}
       ${row('走行距離', r.distance != null ? `${r.distance}km` : '')}
@@ -766,6 +790,9 @@ $('#save-settings').addEventListener('click', () => {
   setSetting('vehicles', $('#vehicles').value.split('\n').map((s) => s.trim()).filter(Boolean).join('\n'));
   $('#vehicles').value = getVehicles().join('\n');
   fillVehicleSelects();
+  setSetting('routes', $('#routes').value.split('\n').map((s) => s.trim()).filter(Boolean).join('\n'));
+  $('#routes').value = getRoutes().join('\n');
+  fillRouteSelects();
   toast('設定を保存しました');
   sync();
 });
@@ -810,8 +837,8 @@ $('#export-nippo').addEventListener('click', async () => {
   const list = (await getAllRecords()).filter((r) => r.type === 'nippo' && r.stops).sort((a, b) => a.date.localeCompare(b.date));
   if (!list.length) { toast('書き出す日報がありません'); return; }
   downloadCSV('運転日報',
-    ['日付', '乗務員', '車両', '出庫時刻', '帰庫時刻', '出庫メーター', '帰庫メーター', '走行距離', 'アルコール出庫前', 'アルコール帰庫後', '運行記録', '給油量', '高速代', '特記事項', '状態'],
-    list.map((r) => [r.date, r.driver, r.vehicle, r.outTime, r.inTime, r.outOdo, r.inOdo, r.distance, r.alcOut, r.alcIn,
+    ['日付', '乗務員', '車両', 'ルート1便目', 'ルート2便目', '出庫時刻', '帰庫時刻', '出庫メーター', '帰庫メーター', '走行距離', 'アルコール出庫前', 'アルコール帰庫後', '運行記録', '給油量', '高速代', '特記事項', '状態'],
+    list.map((r) => [r.date, r.driver, r.vehicle, (r.routes || [])[0], (r.routes || [])[1], r.outTime, r.inTime, r.outOdo, r.inOdo, r.distance, r.alcOut, r.alcIn,
       r.stops.map((s) => `${s.time} ${s.kind} ${s.place} ${s.detail}`.trim()).join(' / '), r.fuel, r.toll, r.note,
       r.status === 'pending' ? '未送信' : '送信済み']));
 });
@@ -875,8 +902,10 @@ if ('serviceWorker' in navigator) {
 $('#version').textContent = APP_VERSION;
 $('#endpoint').value = getSetting('endpoint');
 $('#vehicles').value = getVehicles().join('\n');
+$('#routes').value = getRoutes().join('\n');
 setAdmin(false);
 fillVehicleSelects();
+fillRouteSelects();
 const inspForm = $('#insp-form');
 inspForm.date.value = today();
 inspForm.inspector.value = getSetting('driver') || getSetting('staff');

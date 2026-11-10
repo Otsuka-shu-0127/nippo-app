@@ -64,6 +64,13 @@
         <label>車両<select name="vehicle" class="vehicle-select" required></select></label>
         <div id="insp-status" class="insp-status"></div>
 
+        <h3 class="sub">ルート</h3>
+        <div class="row">
+          <label>1便目<select name="route1" id="route1" required></select></label>
+          <label>2便目<select name="route2" id="route2"></select></label>
+        </div>
+        <p class="hint">2便目がない日は「なし」のままにしてください。</p>
+
         <h3 class="sub">出庫・帰庫</h3>
         <div class="row">
           <label>出庫時刻<input type="time" name="outTime"></label>
@@ -121,6 +128,9 @@
       <div class="admin-bar"><span>管理者モード中（見本写真の登録もできます）</span><button type="button" id="lock-now" class="secondary">ロック</button></div>
       <label>車両リスト（1行に1台）
         <textarea id="vehicles" rows="5"></textarea>
+      </label>
+      <label>ルートリスト（1行に1つ）
+        <textarea id="routes" rows="5"></textarea>
       </label>
       <label>送信先URL
         <input type="url" id="endpoint" placeholder="未設定（デモモード）">

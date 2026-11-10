@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1f4e79">
-  <title>日報アプリ</title>
+  <title>運行日報・車両点検</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -13,7 +13,7 @@
 </head>
 <body>
   <header class="top">
-    <div class="title">日報</div>
+    <div class="title">運行日報<small>デモ版</small></div>
     <div class="status">
       <span id="net" class="pill">確認中</span>
       <span id="pending" class="pill pending" hidden>未送信 0件</span>
@@ -21,50 +21,123 @@
   </header>
 
   <nav class="tabs">
-    <button data-tab="form" class="active">入力</button>
-    <button data-tab="list">一覧</button>
+    <button data-tab="inspect" class="active">点検</button>
+    <button data-tab="nippo">日報</button>
+    <button data-tab="history">履歴</button>
     <button data-tab="settings">設定</button>
   </nav>
 
   <main>
-    <!-- 入力 -->
-    <section id="tab-form" class="tab active">
-      <form id="report-form" autocomplete="off">
-        <label>日付<input type="date" name="date" required></label>
-        <label>担当者<input type="text" name="staff" placeholder="例：山田 太郎" required></label>
-        <label>現場名<input type="text" name="site" placeholder="例：〇〇ビル改修工事"></label>
+    <!-- 運行前点検 -->
+    <section id="tab-inspect" class="tab active">
+      <form id="insp-form" autocomplete="off" novalidate>
+        <h2 class="sec">運行前点検</h2>
         <div class="row">
-          <label>開始<input type="time" name="start"></label>
-          <label>終了<input type="time" name="end"></label>
+          <label>日付<input type="date" name="date" required></label>
+          <label>点検者<input type="text" name="inspector" placeholder="例：山田 太郎" required></label>
         </div>
-        <label>作業内容<textarea name="work" rows="5" placeholder="今日やった作業を入力" required></textarea></label>
-        <label>備考・連絡事項<textarea name="note" rows="3" placeholder="気づいたこと、明日の予定など"></textarea></label>
-        <button type="submit" class="primary">保存する</button>
-        <p class="hint">保存した日報はまずこのスマホ内に保存され、ネットにつながると自動で送信されます。</p>
+        <label>車両<select name="vehicle" class="vehicle-select" required></select></label>
+
+        <div class="progress" id="insp-progress">
+          <div class="bar"><span id="insp-bar"></span></div>
+          <div class="count"><span id="insp-count">0 / 0</span><span id="insp-ng" class="ng-count" hidden></span></div>
+        </div>
+
+        <p class="hint">各項目の「見本」で正常・異常の例を確認し、「OK」か「NG」を押してください。NGの場合は状況と写真を残します。</p>
+
+        <div id="insp-list"></div>
+
+        <button type="submit" class="primary">点検結果を保存する</button>
       </form>
     </section>
 
-    <!-- 一覧 -->
-    <section id="tab-list" class="tab">
+    <!-- 運転日報 -->
+    <section id="tab-nippo" class="tab">
+      <form id="nippo-form" autocomplete="off" novalidate>
+        <h2 class="sec">運転日報</h2>
+        <div class="row">
+          <label>日付<input type="date" name="date" required></label>
+          <label>乗務員<input type="text" name="driver" placeholder="例：山田 太郎" required></label>
+        </div>
+        <label>車両<select name="vehicle" class="vehicle-select" required></select></label>
+        <div id="insp-status" class="insp-status"></div>
+
+        <h3 class="sub">出庫・帰庫</h3>
+        <div class="row">
+          <label>出庫時刻<input type="time" name="outTime"></label>
+          <label>帰庫時刻<input type="time" name="inTime"></label>
+        </div>
+        <div class="row">
+          <label>出庫メーター<input type="number" name="outOdo" inputmode="numeric" placeholder="km"></label>
+          <label>帰庫メーター<input type="number" name="inOdo" inputmode="numeric" placeholder="km"></label>
+        </div>
+        <div class="calc">走行距離：<strong id="distance">— km</strong></div>
+
+        <h3 class="sub">アルコールチェック</h3>
+        <div class="row">
+          <label>出庫前（mg/L）<input type="number" name="alcOut" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></label>
+          <label>帰庫後（mg/L）<input type="number" name="alcIn" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></label>
+        </div>
+
+        <h3 class="sub">運行記録</h3>
+        <div id="stops"></div>
+        <button type="button" id="add-stop" class="secondary small">＋ 運行記録を追加</button>
+
+        <h3 class="sub">給油・高速</h3>
+        <div class="row">
+          <label>給油量（L）<input type="number" name="fuel" inputmode="decimal" step="0.1" min="0"></label>
+          <label>高速代（円）<input type="number" name="toll" inputmode="numeric" min="0"></label>
+        </div>
+
+        <label>特記事項<textarea name="note" rows="3" placeholder="事故・ヒヤリハット・車両の異常・荷主からの連絡など"></textarea></label>
+
+        <button type="submit" class="primary">日報を保存する</button>
+        <p class="hint">保存した内容はまずこのスマホ内に保存され、ネットにつながると自動で送信されます。</p>
+      </form>
+    </section>
+
+    <!-- 履歴 -->
+    <section id="tab-history" class="tab">
       <button id="sync-now" class="secondary">今すぐ送信</button>
-      <ul id="report-list" class="list"></ul>
-      <p id="empty" class="hint">まだ日報がありません。</p>
+      <ul id="history-list" class="list"></ul>
+      <p id="empty" class="hint">まだ記録がありません。</p>
     </section>
 
     <!-- 設定 -->
     <section id="tab-settings" class="tab">
+      <label>車両リスト（1行に1台）
+        <textarea id="vehicles" rows="5"></textarea>
+      </label>
       <label>送信先URL
         <input type="url" id="endpoint" placeholder="未設定（デモモード）">
       </label>
-      <p class="hint">未設定のあいだは「デモモード」です。ネットにつながると送信済みの表示になりますが、実際にはどこにも送られません。</p>
+      <p class="hint">送信先が未設定のあいだは「デモモード」です。ネットにつながると送信済みの表示になりますが、実際にはどこにも送られません。</p>
       <button id="save-settings" class="secondary">設定を保存</button>
       <hr>
-      <button id="export-csv" class="secondary">日報をCSVで書き出す（バックアップ）</button>
+      <div class="row">
+        <button id="export-nippo" class="secondary">日報をCSV出力</button>
+        <button id="export-insp" class="secondary">点検をCSV出力</button>
+      </div>
       <p class="hint" id="storage-info"></p>
+      <hr>
+      <label class="check"><input type="checkbox" id="sample-edit"> 見本写真の登録・変更を許可する（管理者用）</label>
+      <p class="hint">オンにすると、点検項目の「見本」画面から、OK・NGそれぞれの実写を撮影して登録できます。登録していない項目はイラストで表示されます。</p>
       <p class="hint">バージョン <span id="version"></span></p>
     </section>
   </main>
 
+  <!-- 見本（OK/NG） -->
+  <dialog id="sample">
+    <h3 id="sample-title"></h3>
+    <p id="sample-point" class="hint"></p>
+    <div class="sample-grid">
+      <figure class="ok"><figcaption>OK（正常）</figcaption><div id="sample-ok-img" class="sample-img"></div><p id="sample-ok-text"></p><div class="sample-edit" data-state="ok"></div></figure>
+      <figure class="ng"><figcaption>NG（異常）</figcaption><div id="sample-ng-img" class="sample-img"></div><p id="sample-ng-text"></p><div class="sample-edit" data-state="ng"></div></figure>
+    </div>
+    <button id="sample-close" class="secondary">閉じる</button>
+  </dialog>
+
+  <!-- 履歴の詳細 -->
   <dialog id="detail">
     <div id="detail-body"></div>
     <div class="dialog-actions">
@@ -73,8 +146,15 @@
     </div>
   </dialog>
 
+  <!-- 写真の拡大表示 -->
+  <dialog id="photo-view" class="photo-view">
+    <img id="photo-view-img" alt="">
+    <button id="photo-view-close" class="secondary">閉じる</button>
+  </dialog>
+
   <div id="toast" class="toast" hidden></div>
 
+  <script src="checklist.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

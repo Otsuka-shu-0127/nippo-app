@@ -1,7 +1,7 @@
 {
-  "name": "日報アプリ",
-  "short_name": "日報",
-  "description": "オフラインでも入力できる日報アプリ",
+  "name": "運行日報・車両点検",
+  "short_name": "運行日報",
+  "description": "オフラインでも使える運行日報・運行前点検アプリ",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",

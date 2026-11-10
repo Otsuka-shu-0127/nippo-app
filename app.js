@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v3';
+const APP_VERSION = 'v3.1';
 
 // ---------- スマホ内の保存（IndexedDB） ----------
 // 日報と点検を同じ保存場所に入れ、type で区別する（'nippo' / 'inspection'）
@@ -312,38 +312,11 @@ function renderItem(id) {
   $('.photo-btn', el).firstChild.textContent = photos.length ? '📷 写真を追加' : (st.result === 'ng' ? '📷 NG箇所の写真を撮る' : '📷 写真を撮る（任意）');
 }
 
-// 点検の進み具合：項目を選ぶたびにトラックが右へ進む
-let lastDone = 0;
 function updateProgress() {
   const total = ALL_ITEMS.length;
   const done = ALL_ITEMS.filter((i) => inspState[i.id]?.result).length;
   const ng = ALL_ITEMS.filter((i) => inspState[i.id]?.result === 'ng').length;
-  const p = done / total;
-  const complete = done === total;
-
-  const road = $('#road');
-  road.style.setProperty('--p', p);
-  // 通った道を水色にする（トラックの後ろまで）
-  $('#done-lane').style.width = p === 0 ? '0px' : `calc(40px + (100% - 154px) * ${p} + 30px)`;
-  road.classList.toggle('complete', complete);
-  road.classList.toggle('all-ok', complete && ng === 0);
-  road.classList.toggle('has-ng', ng > 0);
-  $('#road-alert').hidden = ng === 0;
-  $('#goal-flag').setAttribute('fill', complete ? (ng ? '#d93025' : '#2ea05a') : '#e8b849');
-
-  let msg;
-  if (done === 0) msg = '点検スタート！';
-  else if (complete) msg = ng ? `NG ${ng}件　管理者に報告を` : '点検完了！出発OK';
-  else msg = `あと ${total - done} 項目${ng ? `（NG ${ng}）` : ''}`;
-  $('#road-bubble').textContent = msg;
-
-  if (done > lastDone) {
-    const truck = $('#road-truck');
-    truck.classList.remove('moving');
-    void truck.offsetWidth; // アニメーションをやり直す
-    truck.classList.add('moving');
-  }
-  lastDone = done;
+  $('#insp-bar').style.width = `${(done / total) * 100}%`;
 
   $('#insp-count').textContent = `${done} / ${total} 項目`;
   const ngEl = $('#insp-ng');

@@ -287,59 +287,6 @@ dialog { max-height: 90vh; overflow-y: auto; }
 label.check { display: flex; align-items: center; gap: 10px; font-weight: 600; }
 label.check input { width: 22px; height: 22px; margin: 0; flex: none; }
 
-/* ---------- v3: 点検の進み具合（ドライバーとトラック） ---------- */
-.road {
-  position: relative;
-  height: 74px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: linear-gradient(#e6f6fd, #f4fbff 60%);
-  border: 1px solid #cfe8f5;
-}
-.road .lane {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 12px;
-  background: #b9c3cf;
-}
-.road .lane::after {
-  content: ""; position: absolute; left: 0; right: 0; top: 5px; height: 2px;
-  background: repeating-linear-gradient(90deg, #fff 0 12px, transparent 12px 24px);
-}
-.road .done-lane {
-  position: absolute; left: 0; bottom: 0; height: 12px; width: 0;
-  background: #00b3ec;
-  transition: width .6s ease;
-}
-.road .driver { position: absolute; left: 4px; bottom: 8px; width: 34px; height: 46px; }
-.road .goal { position: absolute; right: 4px; bottom: 8px; width: 24px; height: 46px; }
-.road .truck {
-  position: absolute; bottom: 7px; width: 84px; height: 44px;
-  left: calc(40px + (100% - 40px - 30px - 84px) * var(--p, 0));
-  transition: left .7s cubic-bezier(.3, 1.3, .5, 1);
-}
-.road .truck.moving svg { animation: bump .35s ease-in-out 2; }
-.road .truck .alert {
-  position: absolute; top: -8px; right: 6px; width: 18px; height: 18px; border-radius: 50%;
-  background: var(--danger); color: #fff; font-size: 12px; font-weight: 800; text-align: center; line-height: 18px;
-  box-shadow: 0 0 0 2px #fff;
-}
-.road .bubble {
-  position: absolute; left: 40px; top: 6px;
-  background: #fff; color: var(--navy); font-size: 12px; font-weight: 700;
-  padding: 3px 8px; border-radius: 10px; border: 1px solid #cfe8f5; white-space: nowrap;
-}
-.road .bubble::before {
-  content: ""; position: absolute; left: -6px; top: 7px; border: 5px solid transparent; border-right-color: #cfe8f5; border-left: 0;
-}
-.road.complete .goal { animation: wave .6s ease-in-out 3; transform-origin: 4px 44px; }
-.road.complete.all-ok .bubble { background: #e6f5ec; color: #14532d; border-color: #b7e2c6; }
-.road.has-ng .bubble { background: #fde8e6; color: #7f1d1d; border-color: #f3c3bd; }
-@keyframes bump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-@keyframes wave { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-12deg); } }
-@media (prefers-reduced-motion: reduce) {
-  .road .truck, .road .done-lane { transition: none; }
-  .road .truck.moving svg, .road.complete .goal { animation: none; }
-}
-
 /* ---------- v3: 設定のロック ---------- */
 .lock-box { text-align: center; padding: 28px 8px 8px; }
 .lock-box .lock-icon { width: 56px; height: 56px; color: var(--navy); margin: 0 auto 8px; display: block; }

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v3.4';
+const APP_VERSION = 'v3.5';
 
 // ---------- スマホ内の保存（IndexedDB） ----------
 // 日報と点検を同じ保存場所に入れ、type で区別する（'nippo' / 'inspection'）
@@ -270,13 +270,13 @@ let inspState = {}; // id -> { result: 'ok'|'ng', comment, photos: [Blob] }
 
 function renderChecklist() {
   releaseUrls();
-  $('#insp-list').innerHTML = CHECKLIST.map((cat) => `
+  $('#insp-list').innerHTML = `<p class="marks">${CHECK_NOTES.map(([m, t]) => `<span><b>${m}</b> ${esc(t)}</span>`).join('')}</p>` + CHECKLIST.map((cat) => `
     <h3 class="sub">${esc(cat.category)}</h3>
     ${cat.items.map((it) => `
       <div class="item" data-id="${it.id}">
         <div class="item-head">
           <div>
-            <div class="item-name">${esc(it.name)}</div>
+            <div class="item-name">${esc(it.group)}</div>
             <div class="item-point">${esc(it.point)}</div>
           </div>
           <button type="button" class="sample-btn" data-act="sample">見本</button>
@@ -344,7 +344,7 @@ let sampleId = null;
 function renderSampleDialog() {
   const it = ALL_ITEMS.find((i) => i.id === sampleId);
   $('#sample-title').textContent = it.name;
-  $('#sample-point').textContent = it.point;
+  $('#sample-point').textContent = `${it.group}：${it.point}`;
   for (const state of ['ok', 'ng']) {
     const ok = state === 'ok';
     const hasPhoto = !!sampleUrls[`${it.id}_${state}`];
@@ -429,8 +429,8 @@ $('#insp-list').addEventListener('change', async (e) => {
 $('#insp-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = e.target;
-  if (!f.inspector.value.trim() || !f.vehicle.value || !f.date.value) {
-    toast('日付・点検者・車両を入力してください');
+  if (!f.inspector.value.trim() || !f.vehicle.value || !f.date.value || !f.weather.value) {
+    toast('日付・点検者・車両・天気を入力してください');
     return;
   }
   const missing = ALL_ITEMS.find((i) => !inspState[i.id]?.result);
@@ -450,6 +450,8 @@ $('#insp-form').addEventListener('submit', async (e) => {
     time: nowTime(),
     inspector: f.inspector.value.trim(),
     vehicle: f.vehicle.value,
+    weather: f.weather.value,
+    defects: f.defects.value.trim(),
     items: ALL_ITEMS.map((i) => ({
       id: i.id,
       category: i.category,
@@ -468,6 +470,7 @@ $('#insp-form').addEventListener('submit', async (e) => {
   requestPersistentStorage();
 
   inspState = {};
+  f.defects.value = '';
   renderChecklist();
   window.scrollTo({ top: 0 });
   await refreshAll();
@@ -661,8 +664,8 @@ $('#history-list').addEventListener('click', async (e) => {
   let html = '';
   if (r.type === 'inspection') {
     html = `<h3>運行前点検</h3><dl>
-      ${row('日時', `${r.date} ${r.time}`)}${row('車両', r.vehicle)}${row('点検者', r.inspector)}
-      ${row('結果', r.ngCount ? `NG ${r.ngCount}件` : '異常なし')}${row('状態', state)}</dl>
+      ${row('日時', `${r.date} ${r.time}`)}${row('車両', r.vehicle)}${row('天気', r.weather)}${row('点検者', r.inspector)}
+      ${row('結果', r.ngCount ? `NG ${r.ngCount}件` : '異常なし')}${row('不良箇所及びその処理', r.defects)}${row('状態', state)}</dl>
       <ul class="detail-items">${r.items.map((i) => `
         <li class="${i.result}">
           <span class="badge ${i.result}">${i.result === 'ok' ? 'OK' : 'NG'}</span> ${esc(i.name)}
@@ -847,9 +850,10 @@ $('#export-insp').addEventListener('click', async () => {
   const list = (await getAllRecords()).filter((r) => r.type === 'inspection').sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   if (!list.length) { toast('書き出す点検記録がありません'); return; }
   downloadCSV('運行前点検',
-    ['日付', '時刻', '車両', '点検者', '結果', 'NG項目', ...ALL_ITEMS.map((i) => i.name), '状態'],
-    list.map((r) => [r.date, r.time, r.vehicle, r.inspector, r.ngCount ? `NG ${r.ngCount}件` : '異常なし',
+    ['日付', '時刻', '車両', '天気', '点検者', '結果', 'NG項目', '不良箇所及びその処理', ...ALL_ITEMS.map((i) => i.name), '状態'],
+    list.map((r) => [r.date, r.time, r.vehicle, r.weather, r.inspector, r.ngCount ? `NG ${r.ngCount}件` : '異常なし',
       r.items.filter((i) => i.result === 'ng').map((i) => `${i.name}${i.comment ? `（${i.comment}）` : ''}`).join(' / '),
+      r.defects,
       ...ALL_ITEMS.map((a) => { const i = r.items.find((x) => x.id === a.id); return i ? i.result.toUpperCase() : ''; }),
       r.status === 'pending' ? '未送信' : '送信済み']));
 });

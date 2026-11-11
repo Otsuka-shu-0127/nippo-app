@@ -17,7 +17,7 @@
   --series: #0068b6; --series-dim: #cdd6e0;
   --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
   --good-tint: #e3f3e3; --good-ink: #006300; --rest: #eef1f4;
-  --tip-bg: #1c2430; --tip-ink: #ffffff; --on-series: #ffffff;
+  --tip-bg: #1c2430; --tip-ink: #ffffff; --on-series: #ffffff; --seal: #c62f3a;
   /* 3系列（積込・荷降ろし・待機） */
   --s1: #0068b6; --s2: #eb6834; --s3: #1baf7a;
   /* 濃淡（少ない→多い） */
@@ -31,7 +31,7 @@
     --line: #26334d; --grid: #212e47; --axis: #3a4a68;
     --series: #3393db; --series-dim: #33415c;
     --good-tint: #163521; --good-ink: #5fd35f; --rest: #1a2539;
-    --tip-bg: #eef2f7; --tip-ink: #151f33; --on-series: #0d1424;
+    --tip-bg: #eef2f7; --tip-ink: #151f33; --on-series: #0d1424; --seal: #ff8080;
     --s1: #3393db; --s2: #d95926; --s3: #199e70;
     --h1: #184f95; --h2: #256abf; --h3: #3987e5; --h4: #6da7ec; --h5: #9ec5f4; --h6: #cde2fb;
   }
@@ -43,7 +43,7 @@
   --line: #26334d; --grid: #212e47; --axis: #3a4a68;
   --series: #3393db; --series-dim: #33415c;
   --good-tint: #163521; --good-ink: #5fd35f; --rest: #1a2539;
-  --tip-bg: #eef2f7; --tip-ink: #151f33; --on-series: #0d1424;
+  --tip-bg: #eef2f7; --tip-ink: #151f33; --on-series: #0d1424; --seal: #ff8080;
   --s1: #3393db; --s2: #d95926; --s3: #199e70;
   --h1: #184f95; --h2: #256abf; --h3: #3987e5; --h4: #6da7ec; --h5: #9ec5f4; --h6: #cde2fb;
 }
@@ -200,6 +200,47 @@ details.tv summary { font-size: 13px; color: var(--brand); cursor: pointer; widt
 details.tv table { margin-top: 8px; font-size: 13px; }
 details.tv td, details.tv th { padding: 6px 10px; }
 
+/* 運行前点検の承認 */
+.ap-ctrl { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 10px; }
+.ap-ctrl .lbl { font-size: 13px; color: var(--muted); font-weight: 600; margin-right: 6px; }
+.ap-ctrl input { font: inherit; font-size: 14px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 11em; }
+.ap-ctrl input:focus-visible, .ap-cmt:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.ap-ctrl .push { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.ap-msg { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--critical); }
+.ap-msg:empty { display: none; }
+.ap-sum { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.ap-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.ap-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ap-card.is-ng:not(.is-done) { border-color: var(--critical); box-shadow: inset 4px 0 0 var(--critical); }
+.ap-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ap-card header b { font-size: 16px; }
+.ap-meta, .ap-none { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+.ap-ng { margin: 0; padding: 8px 10px; list-style: none; background: var(--card-2); border-radius: 8px; font-size: 13px; line-height: 1.5; display: grid; gap: 4px; }
+.ap-ng b { margin-right: 6px; }
+.ap-ph { margin-left: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.ap-card details.tv { margin-top: 0; }
+table.sheet { font-size: 12.5px; }
+table.sheet td, table.sheet th { padding: 5px 8px; vertical-align: top; }
+table.sheet tr.cat th { background: var(--card-2); text-align: left; font-size: 12px; color: var(--ink-2); }
+table.sheet th[scope="row"] { font-weight: 600; text-align: left; }
+.mk { font-weight: 800; white-space: nowrap; }
+.mk.ok { color: var(--good-ink); }
+.mk.ng { color: #fff; background: var(--critical); padding: 1px 6px; border-radius: 4px; font-size: 11px; }
+.ap-act { display: grid; gap: 8px; margin-top: auto; padding-top: 4px; }
+.ap-cmt { font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); width: 100%; }
+.ap-btns { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.btn { font: inherit; font-size: 14px; font-weight: 700; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.go { background: var(--series); border-color: var(--series); color: var(--on-series); }
+.btn.stop { color: var(--critical); border-color: var(--critical); }
+.btn.link { border: 0; background: transparent; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; padding: 6px 4px; font-weight: 600; }
+.ap-done { display: flex; align-items: center; gap: 12px; margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 14px; line-height: 1.5; }
+.ap-done > div { flex: 1; min-width: 0; }
+.ap-done.ng b { color: var(--critical); }
+.ap-c { font-size: 13px; color: var(--ink-2); }
+.seal { width: 46px; height: 46px; flex: none; border: 2px solid var(--seal); color: var(--seal); border-radius: 50%; display: grid; place-items: center; writing-mode: vertical-rl; font-weight: 700; font-size: 13px; letter-spacing: -1px; line-height: 1; font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; }
+
 .tip { position: fixed; z-index: 50; pointer-events: none; background: var(--tip-bg); color: var(--tip-ink); font-size: 12.5px; line-height: 1.5; padding: 7px 10px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.18); max-width: 260px; opacity: 0; transition: opacity .1s; }
 .tip.on { opacity: 1; }
 .tip b { font-weight: 700; }
@@ -240,6 +281,21 @@ footer { max-width: 1240px; margin: 0 auto; padding: 0 16px 32px; font-size: 12p
         <div><h2>本日の運行状況</h2><p class="desc" id="today-desc"></p></div>
       </div>
       <div class="table-wrap"><table id="today-table"></table></div>
+    </section>
+
+    <section class="card s12" id="approve">
+      <div class="card-head"><div><h2>運行前点検の承認（整備管理者）</h2><p class="desc" id="ap-desc"></p></div></div>
+      <div class="ap-ctrl">
+        <label><span class="lbl">点検日</span><select id="ap-date"></select></label>
+        <label><span class="lbl">承認者</span><input id="ap-name" type="text" placeholder="例：小林 正" autocomplete="off"></label>
+        <div class="push">
+          <button type="button" class="btn" id="ap-bulk">異常なしをまとめて「可」にする</button>
+          <button type="button" class="btn link" id="ap-reset">デモの承認を最初に戻す</button>
+        </div>
+      </div>
+      <p class="ap-msg" id="ap-msg" role="alert"></p>
+      <div class="ap-sum" id="ap-sum"></div>
+      <div class="ap-list" id="ap-list"></div>
     </section>
 
     <section class="card s12">
@@ -373,8 +429,8 @@ const NG_POOL = [
   ['wheel_nut', 2, ['左後輪のマーキングがずれている']],
   ['battery', 1, ['液量がLOWER付近']],
   ['belt', 1, ['ベルトに細かいひび']],
-  ['leak', 1, ['車体の下に油じみ']],
-  ['warning', 1, ['エンジン警告灯が消えない']],
+  ['tire_wear', 1, ['右前輪が片減りしている']],
+  ['engine', 1, ['エンジンのかかりが悪い']],
 ];
 const NG_INFO = Object.fromEntries(NG_POOL.map(([id, , c]) => [id, c]));
 
@@ -560,12 +616,14 @@ function renderKpis() {
 function renderToday() {
   const rows = records.filter((r) => r.date === TODAY && inVehicle(r));
   $('#today-desc').textContent = `${md(TODAY)}（${WD[NOW.getDay()]}） ${fromMin(nowMin)} 時点`;
-  const head = '<thead><tr><th>車両</th><th>乗務員</th><th>運行前点検</th><th>状況</th><th>出庫</th><th>帰庫</th><th class="num">走行距離</th><th>アルコール</th><th>スマホからの最終受信</th></tr></thead>';
+  const head = '<thead><tr><th>車両</th><th>乗務員</th><th>運行前点検</th><th>運行可否</th><th>状況</th><th>出庫</th><th>帰庫</th><th class="num">走行距離</th><th>アルコール</th><th>スマホからの最終受信</th></tr></thead>';
   const body = rows.map((r) => {
     const v = VMAP[r.vid];
     const insp = r.insp === 'ok' ? badge('good', '✓', 'OK')
       : r.insp === 'ng' ? badge('critical', '!', `NG ${r.ngs.length}件`)
       : badge('warning', '−', '未実施');
+    const a = approvalOf(r);
+    const apv = r.insp === 'none' ? '—' : !a ? badge('idle', '…', '承認待ち') : a.result === 'ok' ? badge('good', '✓', '可') : badge('critical', '✕', '否');
     const st = r.state === 'before' ? badge('idle', '・', '出庫前') : r.state === 'running' ? badge('info', '▶', '運行中') : badge('good', '✓', '帰庫済');
     const out = r.state === 'before' ? '—' : r.out;
     const inn = r.state === 'back' ? r.in : '—';
@@ -575,7 +633,7 @@ function renderToday() {
     const sync = r.state === 'before' ? '—'
       : ago > 60 ? badge('serious', '!', `${fromMin(r.lastSync)}（圏外の可能性）`)
       : `${ago <= 0 ? 'たった今' : ago < 60 ? `${ago}分前` : `${Math.floor(ago / 60)}時間${ago % 60}分前`}`;
-    return `<tr><td class="veh"><b>${esc(v.name)}</b><span>${esc(v.plate)}</span></td><td>${esc(v.driver)}</td><td>${insp}</td><td>${st}</td><td>${out}</td><td>${inn}</td><td class="num">${km}</td><td>${alc}</td><td>${sync}</td></tr>`;
+    return `<tr><td class="veh"><b>${esc(v.name)}</b><span>${esc(v.plate)}</span></td><td>${esc(v.driver)}</td><td>${insp}</td><td>${apv}</td><td>${st}</td><td>${out}</td><td>${inn}</td><td class="num">${km}</td><td>${alc}</td><td>${sync}</td></tr>`;
   }).join('');
   $('#today-table').innerHTML = head + `<tbody>${body}</tbody>`;
 }
@@ -676,7 +734,7 @@ function renderCalendar() {
       const r = records.find((x) => x.date === d && x.vid === v.id);
       const dl = `${esc(v.name)}　${md(d)}（${WD[new Date(d + 'T00:00').getDay()]}）`;
       if (!r || !r.worked) { s += `<span class="cell rest" data-tip="<b>${dl}</b><br>運休">休</span>`; continue; }
-      if (r.insp === 'ok') s += `<span class="cell ok" data-tip="<b>${dl}</b><br>点検OK（18項目）">✓</span>`;
+      if (r.insp === 'ok') s += `<span class="cell ok" data-tip="<b>${dl}</b><br>点検OK（${ALL_ITEMS_D.length}項目）">✓</span>`;
       else if (r.insp === 'ng') s += `<span class="cell ng" data-tip="<b>${dl}</b><br>NG：${esc(r.ngs.map((n) => ITEM_NAME[n.id] || n.id).join('、'))}">!</span>`;
       else s += `<span class="cell none" data-tip="<b>${dl}</b><br>点検の記録がないまま出庫">−</span>`;
     }
@@ -1048,9 +1106,101 @@ function drawPlan(el, bins, capH) {
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="必要な台数の組み合わせ案。${bins.length}台。${bins.map((b, i) => `${i + 1}台目は${b.items.map((it) => it.route).join('と')}`).join('、')}">${s}</svg>`;
 }
 
+// ---------- 運行前点検の承認（紙の「運行可否の結果（整備管理者等）」「整備管理者印」にあたる） ----------
+const ALL_ITEMS_D = (typeof CHECKLIST !== 'undefined' ? CHECKLIST : []).flatMap((c) => c.items.map((it) => ({ ...it, category: c.category })));
+const SAMPLE_APPROVER = '小林 正'; // 過去分のサンプルの承認者（架空）
+const rw = mulberry32(4242);
+const WEATHER = {};
+[...new Set(records.map((r) => r.date))].forEach((d) => { const x = rw(); WEATHER[d] = x < 0.55 ? '晴れ' : x < 0.85 ? 'くもり' : '雨'; });
+const lsGet = (k, def) => { try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch { return def; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* 保存できない環境では画面上だけ */ } };
+let apOverrides = lsGet('dash.approvals', {});
+const ap = { date: TODAY };
+const apKey = (r) => `${r.date}|${r.vid}`;
+const inspTime = (r) => fromMin(toMin(r.out) - 18);
+const nowHM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const sealName = (n) => (n || '').trim().split(/\s+/)[0].slice(0, 3);
+
+// 過去の日はサンプルとして承認済み、本日分は承認待ちから始める
+function defaultApproval(r) {
+  if (r.date === TODAY || !r.worked || r.insp === 'none') return null;
+  const at = fromMin(toMin(inspTime(r)) + 6);
+  if (r.insp === 'ok') return { result: 'ok', by: SAMPLE_APPROVER, at, comment: '' };
+  return { result: 'ok', by: SAMPLE_APPROVER, at, comment: r.ngs.every((n) => n.resolved) ? '整備済みを確認' : '運行に支障なし。帰庫後に整備' };
+}
+function approvalOf(r) {
+  if (!r.worked || r.insp === 'none') return null;
+  const k = apKey(r);
+  return k in apOverrides ? apOverrides[k] : defaultApproval(r);
+}
+function setApproval(r, v) { apOverrides[apKey(r)] = v; lsSet('dash.approvals', apOverrides); }
+
+// 紙の点検表と同じ並びで、その日の結果を表にする
+function apSheet(r) {
+  const ng = new Set(r.ngs.map((n) => n.id));
+  let s = '', cat = '', grp = '';
+  for (const it of ALL_ITEMS_D) {
+    if (it.category !== cat) { cat = it.category; grp = ''; s += `<tr class="cat"><th colspan="3">${esc(cat)}</th></tr>`; }
+    const g = it.group === grp ? '' : it.group;
+    grp = it.group;
+    s += `<tr><th scope="row">${esc(g)}</th><td>${esc(it.point)}</td><td>${ng.has(it.id) ? '<span class="mk ng">NG</span>' : '<span class="mk ok">✓</span>'}</td></tr>`;
+  }
+  return `<details class="tv"><summary>点検表を見る（${ALL_ITEMS_D.length}項目）</summary><div class="table-wrap"><table class="sheet"><thead><tr><th>点検箇所</th><th>点検内容</th><th>結果</th></tr></thead><tbody>${s}</tbody></table></div></details>`;
+}
+
+function apCard(r) {
+  const v = VMAP[r.vid];
+  const a = approvalOf(r);
+  const res = r.insp === 'ok' ? badge('good', '✓', '異常なし') : r.insp === 'ng' ? badge('critical', '!', `NG ${r.ngs.length}件`) : badge('warning', '−', '点検未実施');
+  let body = '';
+  if (r.insp === 'none') {
+    body = '<p class="ap-none">点検の記録がありません。出庫前にドライバーへ点検を指示してください。</p>';
+  } else {
+    body += `<p class="ap-meta">点検 ${inspTime(r)}　${esc(v.driver)}　天気 ${WEATHER[r.date]}</p>`;
+    if (r.ngs.length) body += `<ul class="ap-ng">${r.ngs.map((n) => `<li><b>${esc(ITEM_NAME[n.id] || n.id)}</b>${esc(n.comment)}${n.photo ? '<span class="ap-ph">写真あり</span>' : ''}</li>`).join('')}</ul>`;
+    body += apSheet(r);
+    if (!a) {
+      body += `<div class="ap-act">
+        ${r.insp === 'ng' ? `<input type="text" class="ap-cmt" placeholder="処置・コメント（例：応急処置済み、帰庫後に交換）" aria-label="${esc(v.name)}の処置・コメント">` : ''}
+        <div class="ap-btns"><button type="button" class="btn go" data-ap="ok" data-vid="${r.vid}">可（運行してよい）</button><button type="button" class="btn stop" data-ap="ng" data-vid="${r.vid}">否</button></div>
+      </div>`;
+    } else {
+      body += `<div class="ap-done ${a.result}">
+        <span class="seal" aria-hidden="true">${esc(sealName(a.by))}</span>
+        <div><b>${a.result === 'ok' ? '運行可' : '運行否'}</b>　${esc(a.by)}　${esc(a.at)}${a.comment ? `<br><span class="ap-c">${esc(a.comment)}</span>` : ''}</div>
+        <button type="button" class="btn link" data-ap="undo" data-vid="${r.vid}">取り消す</button>
+      </div>`;
+    }
+  }
+  return `<article class="ap-card${r.insp === 'ng' ? ' is-ng' : ''}${a ? ' is-done' : ''}" data-vid="${r.vid}">
+    <header><div class="veh"><b>${esc(v.name)}</b><span>${esc(v.plate)}</span></div>${res}</header>${body}</article>`;
+}
+
+function renderApprovals() {
+  const rows = records.filter((r) => r.date === ap.date && r.worked && inVehicle(r));
+  const dl = `${md(ap.date)}（${WD[new Date(ap.date + 'T00:00').getDay()]}）${ap.date === TODAY ? '・本日' : ''}`;
+  const cnt = { wait: 0, waitNg: 0, ok: 0, ng: 0, none: 0 };
+  rows.forEach((r) => {
+    if (r.insp === 'none') { cnt.none++; return; }
+    const a = approvalOf(r);
+    if (!a) { cnt.wait++; if (r.insp === 'ng') cnt.waitNg++; } else cnt[a.result]++;
+  });
+  $('#ap-desc').textContent = `${dl}の点検 ${rows.length}台分。紙の点検表の「運行可否の結果」と「整備管理者印」にあたります。承認者の名前と時刻が印の代わりに残ります。`;
+  $('#ap-sum').innerHTML = !rows.length ? '' : [
+    cnt.wait ? badge(cnt.waitNg ? 'critical' : 'warning', '!', `承認待ち ${cnt.wait}台${cnt.waitNg ? `（うちNGあり ${cnt.waitNg}台）` : ''}`) : badge('good', '✓', '承認待ちなし'),
+    badge('good', '✓', `運行可 ${cnt.ok}台`),
+    cnt.ng ? badge('critical', '✕', `運行否 ${cnt.ng}台`) : '',
+    cnt.none ? badge('warning', '−', `点検未実施 ${cnt.none}台`) : '',
+  ].join('');
+  const bulkN = rows.filter((r) => r.insp === 'ok' && !approvalOf(r)).length;
+  $('#ap-bulk').disabled = !bulkN;
+  $('#ap-bulk').textContent = bulkN ? `異常なしの${bulkN}台をまとめて「可」にする` : '異常なしの点検はすべて承認済み';
+  $('#ap-list').innerHTML = rows.length ? rows.map(apCard).join('') : '<p class="empty">この日は運行がありません。</p>';
+}
+
 function renderAll() {
   $('#asof').textContent = `更新 ${fromMin(nowMin)}`;
-  renderKpis(); renderToday(); renderHourly(); renderRoutes(); renderDaily(); renderVehicles(); renderCalendar(); renderNg();
+  renderKpis(); renderToday(); renderApprovals(); renderHourly(); renderRoutes(); renderDaily(); renderVehicles(); renderCalendar(); renderNg();
 }
 
 // ---------- 絞り込み ----------
@@ -1078,6 +1228,55 @@ $('#sim-routes').addEventListener('click', (e) => {
   renderSim();
   const again = document.querySelector(`#sim-routes button[data-id="${id}"][data-d="${d}"]`);
   if (again && !again.disabled) again.focus();
+});
+
+// ---------- 承認の操作 ----------
+{
+  const opts = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() - i);
+    const k = ymd(d);
+    if (!records.some((r) => r.date === k && r.worked)) continue;
+    opts.push(`<option value="${k}">${md(k)}（${WD[d.getDay()]}）${i === 0 ? '本日' : ''}</option>`);
+  }
+  $('#ap-date').innerHTML = opts.join('');
+}
+$('#ap-date').addEventListener('change', (e) => { ap.date = e.target.value; $('#ap-msg').textContent = ''; renderApprovals(); });
+$('#ap-name').value = lsGet('dash.approver', '');
+$('#ap-name').addEventListener('input', (e) => { lsSet('dash.approver', e.target.value.trim()); if (e.target.value.trim()) $('#ap-msg').textContent = ''; });
+function approver() {
+  const n = $('#ap-name').value.trim();
+  if (n) { $('#ap-msg').textContent = ''; return n; }
+  $('#ap-msg').textContent = '先に「承認者」に名前を入れてください（印の代わりに記録されます）。';
+  $('#ap-name').focus();
+  return null;
+}
+function afterApprove(vid) {
+  renderApprovals(); renderToday();
+  const b = vid && document.querySelector(`#ap-list .ap-card[data-vid="${vid}"] button[data-ap]`);
+  if (b) b.focus();
+}
+$('#ap-list').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-ap]'); if (!b) return;
+  const r = records.find((x) => x.date === ap.date && x.vid === b.dataset.vid);
+  if (!r) return;
+  if (b.dataset.ap === 'undo') { setApproval(r, null); afterApprove(r.vid); return; }
+  const by = approver(); if (!by) return;
+  const cmt = b.closest('.ap-card').querySelector('.ap-cmt');
+  setApproval(r, { result: b.dataset.ap, by, at: nowHM(), comment: cmt ? cmt.value.trim() : '' });
+  afterApprove(r.vid);
+});
+$('#ap-bulk').addEventListener('click', () => {
+  const by = approver(); if (!by) return;
+  const at = nowHM();
+  records.filter((r) => r.date === ap.date && r.worked && inVehicle(r) && r.insp === 'ok' && !approvalOf(r))
+    .forEach((r) => setApproval(r, { result: 'ok', by, at, comment: '' }));
+  afterApprove(null);
+});
+$('#ap-reset').addEventListener('click', () => {
+  if (!confirm('このブラウザで行った承認・取り消しをすべて消して、デモの最初の状態に戻しますか？')) return;
+  apOverrides = {}; lsSet('dash.approvals', apOverrides);
+  afterApprove(null);
 });
 
 // ---------- ツールチップ ----------

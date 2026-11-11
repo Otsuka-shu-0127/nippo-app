@@ -70,7 +70,7 @@ const ILLUST = (() => {
     if (!ok) {
       s += `<path d="M60 104 l6 8 l-4 6 M150 102 l-5 9 l6 7" stroke="${RED}" stroke-width="2.5" fill="none"/>`;
     }
-    s += note(ok, ok ? '溝が十分ある（1.6mm以上）' : '溝がない・ひび割れがある');
+    s += note(ok, ok ? '溝が十分ある' : '溝がない・ひび割れがある');
     return svg(s);
   }
 
@@ -190,56 +190,90 @@ const ILLUST = (() => {
   };
 })();
 
+// 紙の「日常点検表」と同じ並び・同じ言葉にしている
+// group = 点検箇所、point = 点検内容（記号も紙のとおり）、name = 記録・CSVで使う名前
+// ※ … 走行距離や運行時の状態などから判断した適切な時期に実施
+// ◎ … エア・ブレーキが装備されている場合に実施
+// インターロック・連結部は、紙の表で黒塗り（対象外）のため入れていない
+const CHECK_NOTES = [
+  ['※', '走行距離や運行時の状態などから判断した適切な時期に実施'],
+  ['◎', 'エア・ブレーキが装備されている場合に実施'],
+];
+
 const CHECKLIST = [
   {
-    category: '運転席で確認',
+    category: '準備',
     items: [
-      { id: 'brake_pedal', name: 'ブレーキペダル', point: '踏みしろが適当で、ブレーキがよく効く', img: 'pedal',
+      { id: 'prev_issue', group: '前日の異常箇所の確認', point: '前日に異常があった箇所が直っている', name: '前日の異常箇所の確認', img: null,
+        ok: '前日は異常なし、または修理済み', ng: '前日の異常が直っていない' },
+    ],
+  },
+  {
+    category: '運転席での点検',
+    items: [
+      { id: 'brake_pedal', group: 'ブレーキ・ペダル', point: '踏みしろ、効き具合', name: 'ブレーキ・ペダル', img: 'pedal',
         ok: '踏んだときに床との間に余裕があり、しっかり止まる', ng: '床近くまで沈む、効きが弱い、片効きする' },
-      { id: 'parking_brake', name: '駐車ブレーキ', point: 'レバーの引きしろ（踏みしろ）が適当', img: null,
+      { id: 'parking_brake', group: '駐車（パーキング）ブレーキ', point: 'レバーの引きしろ', name: '駐車ブレーキ', img: null,
         ok: '決められたノッチ数で確実に効く', ng: '引きしろが大きすぎる、坂道で車が動く' },
-      { id: 'air_pressure', name: 'エア圧力（エアブレーキ車）', point: 'エンジンをかけて、空気圧の上がり具合が正常', img: 'gauge',
-        ok: '数分で針が規定の範囲まで上がる', ng: 'なかなか上がらない、警報が鳴りやまない' },
-      { id: 'engine', name: 'エンジン', point: 'かかり具合が良く、異音・異常な振動がない', img: null,
-        ok: 'すぐにかかり、アイドリングが安定している', ng: 'かかりにくい、異音・異臭・白煙/黒煙がある' },
-      { id: 'warning', name: '警告灯', point: 'エンジン始動後、メーター内の警告灯が消える', img: 'warning',
-        ok: '始動後すべて消灯する', ng: '赤・黄色の警告灯が点いたまま' },
-      { id: 'wiper', name: 'ワイパー・ウォッシャー', point: 'ウォッシャー液が出て、きれいに拭き取れる', img: 'wiper',
-        ok: '液が出て、すじ・ふき残しがない', ng: '液が出ない、すじが残る、ゴムが切れている' },
+      { id: 'engine', group: 'エンジン', point: '※ かかり具合、異音', name: 'エンジンのかかり具合・異音', img: null,
+        ok: 'すぐにかかり、異音・異常な振動がない', ng: 'かかりにくい、異音・異臭がある' },
+      { id: 'engine_accel', group: 'エンジン', point: '※ 低速、加速の状態', name: 'エンジンの低速・加速', img: null,
+        ok: 'アイドリングが安定し、スムーズに加速する', ng: 'エンストしそう、加速がもたつく、黒煙が出る' },
+      { id: 'washer', group: 'ウインド・ウォッシャ', point: '※ 液量、噴射状態', name: 'ウインド・ウォッシャ', img: 'washer',
+        ok: '液が十分あり、正しい位置に噴射する', ng: '液が少ない・出ない、噴射の向きがずれている' },
+      { id: 'wiper', group: 'ワイパー', point: '※ 拭き取りの状態', name: 'ワイパー', img: 'wiper',
+        ok: 'すじ・ふき残しがなく、きれいに拭き取れる', ng: 'すじが残る、ゴムが切れている' },
+      { id: 'air_pressure', group: '◎ 空気圧力計', point: '空気圧力の上がり具合', name: '空気圧力計', img: 'gauge',
+        ok: 'エンジンをかけて数分で、針が規定の範囲まで上がる', ng: 'なかなか上がらない、警報が鳴りやまない' },
+      { id: 'brake_valve', group: '◎ ブレーキ・バルブ', point: '排気音の異常', name: 'ブレーキ・バルブ', img: null,
+        ok: 'ブレーキを踏んで離したとき、正常な排気音がする', ng: '排気音がしない、エア漏れの音がする' },
+      { id: 'brake_chamber', group: '◎ ブレーキ・チャンバ', point: '※ ロッドのストローク', name: 'ブレーキ・チャンバ', img: null,
+        ok: 'ブレーキを踏んだときのロッドの動きが規定の範囲', ng: 'ストロークが大きすぎる、左右で差がある' },
+      { id: 'brake_drum', group: '◎ ブレーキ・ドラムとライニング', point: '※ すき間', name: 'ブレーキ・ドラムとライニング', img: null,
+        ok: 'ドラムとライニングのすき間が適当', ng: 'すき間が大きい、引きずりがある' },
     ],
   },
   {
-    category: 'エンジンルームで確認',
+    category: 'エンジン・ルームの点検',
     items: [
-      { id: 'oil', name: 'エンジンオイル量', point: 'レベルゲージのHとLの間にある', img: 'dipstick',
-        ok: 'オイルの跡がHとLの間', ng: 'Lより下、または汚れがひどい' },
-      { id: 'coolant', name: '冷却水量', point: 'リザーバータンクのFULLとLOWの間にある', img: 'coolant',
-        ok: 'FULLとLOWの間', ng: 'LOWより下、漏れの跡がある' },
-      { id: 'brake_fluid', name: 'ブレーキ液量', point: 'リザーバータンクのMAXとMINの間にある', img: 'brakeFluid',
-        ok: 'MAXとMINの間', ng: 'MINより下' },
-      { id: 'washer', name: 'ウォッシャー液量', point: 'タンクに十分な量がある', img: 'washer',
-        ok: '十分入っている', ng: '空、または少ない' },
-      { id: 'belt', name: 'ファンベルト', point: '張りが適当で、ひび割れ・損傷がない', img: 'belt',
-        ok: '指で押して適度な張りがあり、傷がない', ng: 'たるみ、ひび割れ、ほつれがある' },
-      { id: 'battery', name: 'バッテリー液量', point: 'UPPERとLOWERの間にある', img: 'battery',
+      { id: 'brake_fluid', group: 'ブレーキ液・オイル（リザーバ・タンク）', point: '液量、漏れ', name: 'ブレーキ液・オイル', img: 'brakeFluid',
+        ok: 'MAXとMINの間で、漏れがない', ng: 'MINより下、タンクの周りに漏れの跡がある' },
+      { id: 'battery', group: 'バッテリー', point: '※ 液量', name: 'バッテリー液量', img: 'battery',
         ok: 'UPPERとLOWERの間', ng: 'LOWERより下' },
+      { id: 'coolant', group: '原動機', point: '※ 冷却水の量', name: '冷却水の量', img: 'coolant',
+        ok: 'リザーバ・タンクのFULLとLOWの間', ng: 'LOWより下、漏れの跡がある' },
+      { id: 'oil', group: '原動機', point: '※ エンジン・オイルの量', name: 'エンジン・オイルの量', img: 'dipstick',
+        ok: 'レベルゲージのHとLの間', ng: 'Lより下、または汚れがひどい' },
+      { id: 'belt', group: '▲ ファン・ベルト', point: '※ 張り具合、損傷', name: 'ファン・ベルト', img: 'belt',
+        ok: '指で押して適度な張りがあり、傷がない', ng: 'たるみ、ひび割れ、ほつれがある' },
     ],
   },
   {
-    category: '車の周りで確認',
+    category: '車の周りからの点検',
     items: [
-      { id: 'tire_pressure', name: 'タイヤの空気圧', point: '接地部分のたわみが異常でない', img: 'tirePressure',
+      { id: 'lights', group: '灯火装置、方向指示器', point: '点灯・点滅具合、汚れ、損傷、レンズ・反射板の変色', name: '灯火装置・方向指示器', img: 'lights',
+        ok: 'すべて点灯・点滅し、汚れ・割れ・変色がない', ng: '点かない、レンズが割れている・変色している' },
+      { id: 'tire_pressure', group: 'タイヤ', point: '空気圧', name: 'タイヤの空気圧', img: 'tirePressure',
         ok: 'つぶれておらず、ほかのタイヤと差がない', ng: '接地面がつぶれている、空気が抜けている' },
-      { id: 'tire_tread', name: 'タイヤの溝・亀裂', point: '溝の深さが十分で、亀裂・損傷がない', img: 'tread',
-        ok: '溝が十分あり（1.6mm以上）、傷がない', ng: 'スリップサインが出ている、ひび割れ・釘がある' },
-      { id: 'wheel_nut', name: 'ホイールナット', point: '緩み・脱落がない（マーキングのずれ）', img: 'wheelNuts',
-        ok: 'マーキングがそろっている', ng: 'マーキングがずれている、ナットがない、さび汁がある' },
-      { id: 'lights', name: '灯火類', point: 'ヘッドライト・ブレーキランプ・ウインカーが点灯・点滅する', img: 'lights',
-        ok: 'すべて点灯・点滅し、汚れ・割れがない', ng: '点かない、レンズが割れている' },
-      { id: 'leak', name: '液漏れ・車体・荷台', point: '車の下に液漏れがなく、車体・荷台に損傷がない', img: 'leak',
-        ok: '液だまりがなく、車体に傷・へこみがない', ng: 'オイル・水の漏れ、車体・荷台の損傷がある' },
-      { id: 'prev_issue', name: '前日の異常箇所', point: '前日に異常があった箇所が直っている', img: null,
-        ok: '異常なし、または修理済み', ng: '前日の異常が直っていない' },
+      { id: 'wheel_nut', group: 'タイヤ', point: '■ ディスク・ホイールの取付状態', name: 'ディスク・ホイールの取付状態', img: 'wheelNuts',
+        ok: 'ナットのマーキングがそろっている', ng: 'マーキングがずれている、ナットがない、さび汁がある' },
+      { id: 'tire_crack', group: 'タイヤ', point: '亀裂・損傷', name: 'タイヤの亀裂・損傷', img: null,
+        ok: '亀裂・傷がなく、釘などが刺さっていない', ng: 'ひび割れ・傷がある、釘が刺さっている' },
+      { id: 'tire_wear', group: 'タイヤ', point: '異常な摩耗', name: 'タイヤの異常な摩耗', img: null,
+        ok: '片減り・段減りがない', ng: '片側だけ減っている、段減りがある' },
+      { id: 'tire_tread', group: 'タイヤ', point: '※★ 溝の深さ', name: 'タイヤの溝の深さ', img: 'tread',
+        ok: '溝が十分あり、スリップサインが出ていない', ng: 'スリップサインが出ている、溝が浅い' },
+      { id: 'air_tank', group: '◎ エア・タンク', point: 'タンク内の凝水', name: 'エア・タンクの凝水', img: null,
+        ok: 'ドレンコックを開けても水がほとんど出ない', ng: '水がたくさん出る' },
+    ],
+  },
+  {
+    category: 'その他',
+    items: [
+      { id: 'equipment', group: 'スペア・タイヤ、工具、停止表示板、チャート紙、★タイヤチェーン', point: '積んであり、使える状態', name: '備品（スペア・タイヤ、工具など）', img: null,
+        ok: 'すべて積んであり、使える', ng: '足りないもの・使えないものがある' },
+      { id: 'documents', group: '車検証、保険証、点検整備記録簿、非常信号用具', point: '車内にある', name: '書類・非常信号用具', img: null,
+        ok: 'すべて車内にある', ng: '見当たらないものがある' },
     ],
   },
 ];

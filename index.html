@@ -38,7 +38,12 @@
           <label>日付<input type="date" name="date" required></label>
           <label>点検者<input type="text" name="inspector" placeholder="例：山田 太郎" required></label>
         </div>
-        <label>車両<select name="vehicle" class="vehicle-select" required></select></label>
+        <div class="row">
+          <label>車両<select name="vehicle" class="vehicle-select" required></select></label>
+          <label>天気<select name="weather" required>
+            <option value="">選択</option><option>晴れ</option><option>くもり</option><option>雨</option><option>雪</option>
+          </select></label>
+        </div>
 
         <div class="progress" id="insp-progress">
           <div class="bar"><span id="insp-bar"></span></div>
@@ -48,6 +53,8 @@
         <p class="hint">各項目の「見本」で正常・異常の例を確認し、「OK」か「NG」を押してください。NGの場合は状況と写真を残します。</p>
 
         <div id="insp-list"></div>
+
+        <label>不良箇所及びその処理<textarea name="defects" rows="2" placeholder="あれば記入（例：右ブレーキランプ球切れ → 交換済み）"></textarea></label>
 
         <button type="submit" class="primary">点検結果を保存する</button>
       </form>

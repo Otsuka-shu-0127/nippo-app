@@ -207,6 +207,8 @@ select { appearance: none; -webkit-appearance: none; background-image: linear-gr
 .item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .item-name { font-weight: 700; font-size: 17px; }
 .item-point { color: var(--muted); font-size: 14px; margin-top: 2px; line-height: 1.5; }
+.marks { display: grid; gap: 4px; font-size: 13px; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin: 0 0 4px; }
+.marks b { color: var(--text); }
 .sample-btn { flex: none; border: 0; color: var(--brand); background: transparent; border-radius: 8px; padding: 8px 6px 8px 12px; font-size: 14px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .sample-btn:active { background: #e8f1fa; }
 .judge { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }

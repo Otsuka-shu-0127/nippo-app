@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = 'v3.5';
+const APP_VERSION = 'v3.6';
 
 // ---------- スマホ内の保存（IndexedDB） ----------
 // 日報と点検を同じ保存場所に入れ、type で区別する（'nippo' / 'inspection'）
